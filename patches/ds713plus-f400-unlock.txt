@@ -1,0 +1,3 @@
+# UsbBusDxe: remove both non-F400 rejection branches.
+# Format: FileGuid SectionType PatchType:Find:Replace [additional patches...]
+240612B7-A063-11D4-9A3A-0090273FC14D 10 P:0F8517030000:909090909090 P:0F850D030000:909090909090

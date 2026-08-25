@@ -1,0 +1,43 @@
+name: Hardware compatibility report
+description: Submit probe/boot evidence for a Granite Well/Cedarview model
+title: "[hardware] "
+labels: [hardware]
+body:
+  - type: input
+    id: model
+    attributes:
+      label: Exact Synology model
+    validations:
+      required: true
+  - type: input
+    id: dsm
+    attributes:
+      label: DSM version
+    validations:
+      required: true
+  - type: textarea
+    id: probe
+    attributes:
+      label: Probe invariants
+      description: Include chipset, flash size, FREG, PR0..PR4, BIOS_CNTL, FLOCKDN and erase block size. Redact private data.
+    validations:
+      required: true
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Highest completed stage
+      options:
+        - Probe only
+        - Double dump verified
+        - Candidate built
+        - Dry-run verified
+        - Flash written and verified
+        - Reboot verified
+        - Non-F400 USB boot verified
+    validations:
+      required: true
+  - type: textarea
+    id: usb
+    attributes:
+      label: USB boot evidence
+      description: Port/controller, VID:PID, UEFI/legacy mode, OS, DHCP/SSH/console result. Do not attach proprietary firmware.

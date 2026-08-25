@@ -1,0 +1,7 @@
+# États de récupération
+
+- `FINAL_STATUS=SUCCESS_CANDIDATE_VERIFIED` : candidat relu correctement ; exécuter quand même `08-postflash-verify.sh` avant reboot.
+- `FINAL_STATUS=ROLLBACK_ORIGINAL_VERIFIED` : candidat en échec, zone originale restaurée et vérifiée.
+- `FINAL_STATUS=CRITICAL_DO_NOT_REBOOT` : ni candidat ni rollback vérifiés. **Ne pas redémarrer ni couper l'alimentation.** Conserver la machine allumée et les logs.
+
+Un programmateur SPI externe reste le moyen de récupération universel recommandé pour toute personne qui ne peut accepter la perte du matériel, même si l'expérience validée ici a été réalisée uniquement par logiciel.

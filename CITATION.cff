@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If this repository helped your research, please cite the repository and upstream community sources listed in docs/SOURCES.md."
+title: "Synology DS713+ F400 USB Boot Unlock"
+type: software
+authors:
+  - name: "Project contributors"
+version: 0.1.0
+date-released: 2026-08-25
+license: MIT

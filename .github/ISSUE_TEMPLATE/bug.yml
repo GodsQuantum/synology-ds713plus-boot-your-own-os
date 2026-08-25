@@ -1,0 +1,24 @@
+name: Script bug
+description: Report a reproducible repository bug
+title: "[bug] "
+labels: [bug]
+body:
+  - type: textarea
+    id: happened
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Redacted logs
+      description: Never attach BIOS images, credentials, SSH keys, or private secrets.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Repository version/commit
+    validations:
+      required: true

@@ -1,0 +1,13 @@
+artifacts/
+work/
+*.bin
+*.rom
+*.fd
+*.cap
+*.dump/
+*.log
+*.pid
+*.env.local
+.DS_Store
+__pycache__/
+*.pyc

@@ -1,105 +1,167 @@
-# Synology DS713+ — normal USB boot (F400 bypass)
+# Synology DS713+ — Boot Your OS of Choice
 
-[![lint](https://github.com/GodsQuantum/synology-ds713plus-f400-unlock/actions/workflows/lint.yml/badge.svg)](https://github.com/GodsQuantum/synology-ds713plus-f400-unlock/actions/workflows/lint.yml)
+[![lint](https://github.com/GodsQuantum/synology-ds713plus-boot-your-own-os/actions/workflows/lint.yml/badge.svg)](https://github.com/GodsQuantum/synology-ds713plus-boot-your-own-os/actions/workflows/lint.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **[🇫🇷 Version française](README.fr.md)** ·
+[Choose an OS](docs/OS-OPTIONS.md) ·
+[RAM upgrade](docs/RAM-UPGRADE.md) ·
 [Verified hardware](docs/VERIFIED-HARDWARE.md) ·
-[Safety](docs/SAFETY.md) ·
-[Recovery](docs/RECOVERY.md) ·
-[Sources](docs/SOURCES.md)
+[Safety](docs/SAFETY.md)
 
-Synology's Granite Well/Tiano firmware on the **DS713+** expects USB boot devices with the hard-coded VID:PID `F400:F400`.
+> **Give an EOL Synology DS713+ a second life.** Remove Synology's `F400:F400` USB boot restriction and boot a compatible modern x86-64 Linux/NAS OS from a normal USB drive.
 
-So a normal USB stick can work perfectly once Linux is running, yet still be ignored by the firmware at boot.
+The **DS713+ is still useful hardware**: Intel x86-64 CPU, two SATA bays, dual Gigabit Ethernet, USB 3.0 and eSATA. The problem in 2026 is mostly software support.
 
-This repo is the complete **A-to-Z workflow I used on a real DS713+** to remove that restriction, flash only the SPI erase blocks that actually changed, verify the result, and boot Debian 13 from an ordinary USB stick.
+Synology now lists the DS713+ as **Discontinued**, **DSM Update End of Life**, with **Limited** technical support. Its last upgradable DSM branch is **DSM 7.1**, and Synology's Download Center currently tops out at **DSM 7.1.1**.
 
-> **Short version:** patch `UsbBusDxe`, remove the two F400 checks, rebuild, flash the real changed area, verify twice, boot.
+This project takes a different route: keep the hardware, remove the firmware's Synology-only USB VID/PID check, and use the machine as a normal small x86-64 server/NAS.
 
 ---
 
-## ✅ What actually works
+## Before → after
 
-| Test | Result |
+| | Stock DS713+ | After this project |
+|---|---|---|
+| Official OS path | DSM only | Compatible x86-64 Linux/NAS OS |
+| DSM ceiling | DSM 7.1 / 7.1.1 downloads | No DSM ceiling if you leave DSM |
+| DSM update status | ❌ End of Life | Depends on the OS you choose |
+| Normal USB boot | ❌ Firmware expects `F400:F400` | ✅ Normal non-F400 USB boot verified |
+| Debian 13 | Not a normal supported boot path | ✅ **Verified A-to-Z** |
+| OpenMediaVault 8 | Not a Synology-supported option | 🟢 Strong candidate |
+| Ubuntu Server 26.04 LTS | Not a Synology-supported option | 🟢 Plausible candidate |
+| Current TrueNAS | Not a Synology-supported option | 🔴 Not a sensible target: 8 GB minimum RAM |
+| Hardware | Same 2012 NAS | Same hardware, under your control |
+
+**Important:** “Boot your OS of choice” means **a compatible OS that fits this hardware**. This patch removes the Synology USB whitelist; it does not magically add drivers or increase the CPU/RAM limits.
+
+---
+
+## The hardware is old — but not useless
+
+Synology launched the DS713+ in 2012 as a fairly capable 2-bay business NAS.
+
+Reference hardware:
+
+```text
+CPU           Intel Atom D2700 / Cedarview
+              2 cores / 4 threads @ 2.13 GHz
+Architecture  Intel 64 / x86-64
+RAM stock     1 GB DDR3
+CPU RAM max   4 GB DDR3-800/1066
+Storage       2 × 2.5"/3.5" SATA bays, hot-swap
+Network       2 × Gigabit Ethernet
+Front         1 × USB 2.0
+Rear          2 × USB 3.0 + eSATA
+```
+
+For a lightweight NAS, backup box, SMB/NFS server, rsync target, small Docker-free server, monitoring node, or general Debian box, that can still be perfectly useful.
+
+The important limitation is the **4 GB RAM ceiling** of the Atom D2700 memory controller. See [RAM upgrade](docs/RAM-UPGRADE.md).
+
+---
+
+## ✅ What is actually verified
+
+This repo does not mark “should work” as “works”.
+
+| Test | Status |
 |---|---|
-| DS713+ boots DSM after the BIOS flash | ✅ Verified |
-| Ordinary non-`F400:F400` USB stick | ✅ Accepted |
-| Front USB 2.0 boot | ✅ Verified |
-| Debian 13 amd64 / UEFI | ✅ Verified |
-| Linux userspace + network + SSH | ✅ Verified |
-| Rear USB 3.0 port #1 | ❌ Does not boot |
-| Rear USB 3.0 port #2 | ❌ Does not boot |
-| Rear USB 3.0 once Linux is running | ✅ Works through `xhci_hcd` |
-| Other Cedarview / Granite Well Synology models | ⚠️ Not validated |
+| BIOS dump → patch → flash → full verification | ✅ Verified |
+| DSM boots normally after patch | ✅ Verified |
+| Ordinary USB drive with VID:PID `abcd:1234` | ✅ Accepted |
+| Front USB 2.0 UEFI boot | ✅ Verified |
+| Debian 13 amd64 | ✅ Verified |
+| Linux userspace + DHCP/network + SSH | ✅ Verified |
+| Rear Etron USB 3.0 port #1 | ❌ Does not boot |
+| Rear Etron USB 3.0 port #2 | ❌ Does not boot |
+| Rear USB 3.0 once Linux is running | ✅ Works via `xhci_hcd` |
 
-Final boot test:
+Reference boot:
 
 ```text
 USB VID:PID   abcd:1234
-Boot mode     UEFI x86_64
+Partitioning  GPT + EFI System Partition
+Boot mode     UEFI x86-64
 OS            Debian 13
 Port          front USB 2.0
-Result        boot → network → SSH
+Result        UEFI → Linux → network → SSH
 ```
 
-So the useful conclusion is simple:
+That proves the actual goal of the firmware modification:
 
-> **Once the F400 check is removed, the DS713+ can boot a normal USB drive from the front USB 2.0 port.**
-
-### Rear USB 3.0
-
-I tested **both** rear Etron EJ168A ports with the exact same known-good USB stick, each time after a complete electrical cold boot.
-
-Neither rear port booted it. Moving the same stick back to the front USB 2.0 port after a cold start worked again.
-
-Linux can use the Etron controller normally once the kernel is running, but the current firmware patch only removes the F400 VID/PID restriction. It does **not** add EFI xHCI support.
-
-So rear USB 3.0 boot is **not supported by this F400-only patch**.
+> **A patched DS713+ can boot a completely ordinary non-F400 USB device from its front USB 2.0 port.**
 
 ---
 
-## Why this repo exists
+## What OS should I use?
 
-The old Granite Well research was enough to show that Synology checks for `F400:F400`.
+### ✅ Debian 13 — verified
 
-What it did **not** give me was a workflow I was comfortable running on a headless NAS with no convenient recovery path.
+This is the reference OS used for the final hardware test.
 
-Before writing anything, I wanted clear answers to these questions:
+If you want the simplest base, Debian is the known-good starting point.
 
-- did I dump the correct BIOS region?
-- are both dumps identical?
-- is this really the hardware profile I expect?
-- is the BIOS region writable?
-- what is the actual erase size?
-- did the firmware rebuild correctly?
-- which physical SPI blocks really changed?
-- does the write stay entirely inside the BIOS region?
-- can the candidate be verified immediately?
-- can the script roll back if verification fails?
-- can the full BIOS region be checked again before reboot?
+### 🟢 OpenMediaVault 8 — probably the most interesting NAS target
 
-The scripts in this repo are built around those checks.
+OMV 8 is based on **Debian 13**, supports AMD64, and its documentation allows operation from **1 GiB RAM** at the low end.
 
----
+That makes it a very natural candidate for the DS713+, especially after a 2 GB or 4 GB RAM upgrade.
 
-## ⚠️ Before flashing
+It has **not yet been installed A-to-Z by this repository**, so it is deliberately marked as a candidate rather than verified.
 
-Firmware flashing can brick hardware.
+### 🟢 Ubuntu Server 26.04 LTS — plausible
 
-The automated write path here is verified on **one DS713+ hardware/firmware profile**. Related Synology models are research candidates, not automatically supported targets.
+Ubuntu Server 26.04 has an amd64 installer and can start around 1.5 GB RAM depending on installation/use case.
 
-Do not skip the probe/dump stages and do not reuse someone else's firmware image.
+The D2700 is Intel 64, so the basic architecture matches. Hardware-specific installation on the DS713+ is still unverified here.
 
-**No Synology BIOS or modified BIOS image is distributed in this repo.**
+### 🔴 Current TrueNAS — skip it on this machine
 
-Read [docs/SAFETY.md](docs/SAFETY.md) before the write stage.
+Current TrueNAS documentation calls for **8 GB RAM minimum**.
+
+The Atom D2700 memory controller tops out at **4 GB**.
+
+So even though TrueNAS is x86-64, current TrueNAS is not a sensible recommendation for this NAS.
+
+See the fuller comparison in **[Choosing an OS](docs/OS-OPTIONS.md)**.
 
 ---
 
-## 🔧 What the patch changes
+## RAM: 1 GB stock, up to 4 GB at the CPU level
 
-Target module:
+Synology shipped the DS713+ with **1 GB DDR3**.
+
+Intel specifies the D2700 for a maximum of **4 GB DDR3-800/1066**, single-channel, non-ECC.
+
+Community reports show DS713+ units successfully running both **2 GB** and **4 GB** SO-DIMMs, including reports of the Kingston `KVR13S9S8/4` 4 GB module working under DSM 6 and DSM 7.
+
+But this is **not an official Synology-supported upgrade**, and module layout/density matters on old Cedarview hardware.
+
+Practical framing:
+
+| RAM | Recommendation |
+|---|---|
+| 1 GB | ✅ Stock; enough for lean Debian / very light OMV |
+| 2 GB | 🟢 Conservative upgrade |
+| 4 GB | 🟠 CPU maximum; community-proven on DS713+, but choose the module carefully |
+| 8 GB | ❌ Outside the D2700 specification |
+
+See **[RAM upgrade and hardware limits](docs/RAM-UPGRADE.md)** before buying a module.
+
+---
+
+## Why a normal USB stick does not boot stock firmware
+
+The DS713+ firmware contains a USB DXE module that explicitly checks for Synology's USB VID/PID pair:
+
+```text
+F400:F400
+```
+
+A normal USB drive can be perfectly valid, yet the firmware rejects it before your OS gets a chance to run.
+
+The target module is:
 
 ```text
 Module       UsbBusDxe
@@ -107,63 +169,24 @@ FFS GUID     240612B7-A063-11D4-9A3A-0090273FC14D
 Section      PE32 / 0x10
 ```
 
-The stock firmware contains two conditional jumps that reject USB devices whose VID or PID is not `0xF400`:
+The two rejection branches are:
 
 ```text
 +0x2991  0F 85 17 03 00 00  ->  90 90 90 90 90 90
 +0x299B  0F 85 0D 03 00 00  ->  90 90 90 90 90 90
 ```
 
-At PE level the semantic change is only **12 bytes**.
+Only **12 semantic bytes** are changed.
 
-The catch is that `UsbBusDxe` sits inside an LZMA-compressed firmware section. Rebuilding it changes the compressed byte stream, so the final BIOS image differs over a much larger area.
+The firmware section is LZMA-compressed, though, so the rebuilt physical BIOS differs over a much larger region. That is why this project calculates the real changed SPI area and aligns it to the hardware erase size instead of pretending that a 12-byte patch means a 12-byte SPI write.
 
-This repo therefore computes the **real physical diff**, aligns it to the chipset erase size, checks that it stays inside the BIOS region, and only writes that aligned zone.
-
-Reference result on the tested DS713+:
-
-```text
-Semantic patch        12 bytes
-
-Physical diff
-first changed byte    0x011058
-last changed byte     0x095d28
-
-4 KiB aligned zone
-start                 0x011000
-end                   0x095fff
-size                  544768 bytes
-```
+Deep dive: [How the F400 restriction works](docs/THEORY.md).
 
 ---
 
-## 🧱 Verified DS713+ SPI profile
+## 🚀 Workflow
 
-```text
-Platform         Synology DS713+ / Granite Well
-Chipset          Intel ICH10R 8086:3a16
-SPI flash        4 MiB
-
-Descriptor       0x000000 - 0x000fff
-GbE              0x001000 - 0x010fff
-BIOS             0x011000 - 0x210fff (2 MiB)
-
-BIOS region      read/write
-FLOCKDN          0
-PR0..PR4         unused
-BIOSWE           enabled
-Erase block      4096 bytes
-```
-
-One important detail: physical space `0x211000-0x3fffff` is not readable through ICH hardware sequencing on the tested unit.
-
-A 4 MiB carrier assembled for flashrom is therefore **not a trustworthy full physical chip dump**. The workflow keeps read/write/verify operations constrained by an explicit layout.
-
----
-
-## 🚀 Quick start
-
-Run this from a Linux machine with SSH access to DSM:
+Run the tooling from a Linux machine with SSH access to DSM.
 
 ```bash
 export NAS_HOST='192.168.1.x'
@@ -178,9 +201,9 @@ export NAS_USER='your-admin-user'
 ./scripts/06-preflight.sh
 ```
 
-At this point, **nothing has been flashed yet**.
+At this point **nothing has been flashed yet**.
 
-The real write is deliberately split into explicit stages:
+The real write is intentionally split into explicit stages:
 
 ```bash
 ./scripts/07-flash.sh prepare
@@ -188,47 +211,79 @@ The real write is deliberately split into explicit stages:
 ./scripts/07-flash.sh status
 ```
 
-Then verify before rebooting:
+Before rebooting:
 
 ```bash
 ./scripts/08-postflash-verify.sh
 ```
 
-Do not reboot unless the final result is:
+Do not reboot unless the final verification reports:
 
 ```text
 READY_FOR_REBOOT=YES
 ```
 
-The scripts never reboot the NAS automatically.
+The flashing workflow never reboots the NAS automatically.
+
+Read **[Safety](docs/SAFETY.md)** and **[Recovery](docs/RECOVERY.md)** before writing.
 
 ---
 
-## 📁 Repo map
+## Why the rear USB 3.0 ports do not boot
 
-| Path | Purpose |
+The front port and rear ports are not on the same controller:
+
+```text
+Front USB 2.0
+└── Intel ICH10 EHCI
+    └── firmware boot works after F400 bypass
+
+Rear USB 3.0
+└── Etron EJ168A xHCI
+    └── Linux driver works after kernel boot
+    └── firmware boot NOT verified / does not work with current patch
+```
+
+Both rear ports were tested with the same known-good Debian USB drive after complete electrical cold boots. Neither booted.
+
+The current patch only removes the F400 rejection. It does **not** add an EFI xHCI driver such as `XhciDxe`.
+
+That remains a separate future experiment.
+
+---
+
+## 📁 Where to go next
+
+| If you want to… | Read |
 |---|---|
-| `scripts/` | build, probe, dump, patch, preflight, flash, verify |
-| `scripts/lib/` | shared shell helpers |
-| `profiles/` | verified hardware invariants |
-| `patches/` | patch description — **no firmware binaries** |
-| `docs/SAFETY.md` | read before flashing |
-| `docs/RECOVERY.md` | rollback / recovery |
-| `docs/USB-BOOT.md` | USB boot validation |
-| `docs/VERIFIED-HARDWARE.md` | tested hardware status |
-| `docs/REFERENCE-RESULTS.md` | reference values from the working DS713+ |
-| `docs/THEORY.md` | deeper technical notes |
-| `docs/SOURCES.md` | upstream research / references |
+| Pick Debian / OMV / Ubuntu / another OS | [OS options](docs/OS-OPTIONS.md) |
+| Upgrade the RAM | [RAM upgrade](docs/RAM-UPGRADE.md) |
+| See exactly what hardware was verified | [Verified hardware](docs/VERIFIED-HARDWARE.md) |
+| Understand the firmware patch | [Theory](docs/THEORY.md) |
+| See hashes / reference offsets | [Reference results](docs/REFERENCE-RESULTS.md) |
+| Test USB boot correctly | [USB boot](docs/USB-BOOT.md) |
+| Understand the safety gates | [Safety](docs/SAFETY.md) |
+| Recover from a failed verification | [Recovery](docs/RECOVERY.md) |
+| Check upstream references | [Sources](docs/SOURCES.md) |
 
 ---
 
-## Related Synology models
+## Could this work on other Synology models?
 
-DS412+, DS1512+, DS1812+, DS1513+, DS1813+, DS2413+, RS812+ and other Cedarview/Granite Well systems are useful research candidates.
+**Possibly — but do not flash a DS713+ profile onto another model.**
 
-They are **not automatically compatible**.
+The following Cedarview / Granite Well-era systems are especially interesting research targets:
 
-Firmware contents, SPI permissions, erase geometry, module bytes and rebuild output can differ. Start with probe + dump and open a hardware report before attempting a write.
+| Model family | Last Synology OS branch | Status in this repo |
+|---|---:|---|
+| DS713+ | DSM 7.1 | ✅ Firmware + front USB boot verified |
+| DS1513+ / DS1813+ / DS2413+ | DSM 7.1 | ❓ Related / unverified |
+| DS412+ / DS1512+ / DS1812+ | DSM 6.2 | ❓ Related / unverified |
+| RS812+ / related x12 units | DSM 6.2 | ❓ Related / unverified |
+
+A related CPU generation does **not** guarantee the same BIOS image, module bytes, flash permissions or erase geometry.
+
+For another model, start with **probe + double dump only**, then open a hardware report. Do not jump directly to the write stage.
 
 ---
 
@@ -236,10 +291,17 @@ Firmware contents, SPI permissions, erase geometry, module bytes and rebuild out
 
 Repository-authored scripts and documentation are MIT licensed.
 
-This repo does **not** redistribute Synology firmware, a modified Synology BIOS, flashrom binaries or UEFITool binaries.
+This repository does **not** redistribute:
+
+- Synology firmware;
+- a modified Synology BIOS;
+- flashrom binaries;
+- UEFITool binaries.
+
+You dump and patch firmware from hardware you control.
 
 ## Credits
 
-Built on the Granite Well BIOS research shared by **Orefie** and other SynoForum contributors, plus [flashrom](https://flashrom.org/) and [UEFITool](https://github.com/LongSoft/UEFITool).
+This work builds on Granite Well BIOS research shared by **Orefie** and other SynoForum contributors, plus [flashrom](https://flashrom.org/) and [UEFITool](https://github.com/LongSoft/UEFITool).
 
-See [docs/SOURCES.md](docs/SOURCES.md) for the references used.
+The official Synology, Intel, OMV, Ubuntu, TrueNAS and community references used for the hardware/OS claims are listed in **[Sources](docs/SOURCES.md)**.

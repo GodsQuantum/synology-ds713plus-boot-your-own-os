@@ -1,5 +1,5 @@
-name: Hardware compatibility report
-description: Submit probe/boot evidence for a Granite Well/Cedarview model
+name: Hardware / OS compatibility report
+description: Submit probe, firmware or boot evidence for a DS713+ or related Granite Well/Cedarview model
 title: "[hardware] "
 labels: [hardware]
 body:
@@ -7,21 +7,37 @@ body:
     id: model
     attributes:
       label: Exact Synology model
+      placeholder: DS713+
     validations:
       required: true
+
+  - type: input
+    id: board
+    attributes:
+      label: Board / hardware revision if known
+      placeholder: Optional
+
   - type: input
     id: dsm
     attributes:
-      label: DSM version
+      label: Current / original DSM version
     validations:
       required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Alternative OS tested
+      placeholder: Debian 13 / OMV 8 / Ubuntu Server 26.04 / other
+
   - type: textarea
     id: probe
     attributes:
       label: Probe invariants
-      description: Include chipset, flash size, FREG, PR0..PR4, BIOS_CNTL, FLOCKDN and erase block size. Redact private data.
+      description: Include chipset, flash size, FREG, PR0..PR4, BIOS_CNTL, FLOCKDN and erase-block size. Redact private data.
     validations:
       required: true
+
   - type: dropdown
     id: stage
     attributes:
@@ -32,12 +48,14 @@ body:
         - Candidate built
         - Dry-run verified
         - Flash written and verified
-        - Reboot verified
+        - DSM reboot verified
         - Non-F400 USB boot verified
+        - Alternative OS userspace/network verified
     validations:
       required: true
+
   - type: textarea
     id: usb
     attributes:
-      label: USB boot evidence
+      label: Boot evidence
       description: Port/controller, VID:PID, UEFI/legacy mode, OS, DHCP/SSH/console result. Do not attach proprietary firmware.

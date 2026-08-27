@@ -31,17 +31,7 @@ Chaque modèle/révision doit avoir sa propre identification chipset, map flash,
 
 ## Hashes de référence
 
-Deux lectures BIOS 2 Mio identiques :
-
-```text
-<reference-unit-sha256-redacted>
-```
-
-Premier candidat historique :
-
-```text
-<reference-unit-sha256-redacted>
-```
+Les empreintes BIOS et candidat de l'unité de référence ne sont volontairement pas publiées : elles sont propres à cette unité et ne constituent pas des constantes de compatibilité.
 
 Binaires bridge connus fonctionnels lors de l'expérience v9.1 :
 
@@ -50,4 +40,4 @@ DS713Bridge v9.1  2c5a336e52a3d89bcf8029c85818ecbeb2a9477c6dd8367227c7027b5cc833
 XhciDxe            20c3dbda0e0720fe171a7c0b06c995c4fe319f7338acfb75e9b5ee271a3092b3
 ```
 
-Ces hashes documentent l'expérience de référence ; la compatibilité matérielle reste déterminée par les probes de sécurité et les preuves de boot.
+Les hashes du bridge ci-dessus identifient des artefacts logiciels reproductibles ; la compatibilité matérielle reste déterminée par les probes de sécurité et les preuves de boot.

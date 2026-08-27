@@ -4,25 +4,13 @@ These values document the first fully verified DS713+ experiment. They are **not
 
 ## Firmware reads
 
-```text
-BIOS read #1/#2, 2 MiB:
-<reference-unit-sha256-redacted>
-
-IFD-defined-region carrier read #1/#2, 4 MiB container:
-<reference-unit-sha256-redacted>
-```
+The reference-unit SHA-256 digests are intentionally not published. They are unit-specific evidence, not compatibility constants; each user must validate their own double dump locally.
 
 The 4 MiB container is **not a physical full-chip dump**. Hardware sequencing faults at `0x211000`, after the defined BIOS region.
 
 ## Manually audited first candidate
 
-```text
-2 MiB candidate SHA-256:
-<reference-unit-sha256-redacted>
-
-4 MiB carrier SHA-256:
-<reference-unit-sha256-redacted>
-```
+The reference-unit candidate and carrier digests are intentionally not published. The repository derives and verifies each user's candidate from that user's own firmware dump.
 
 Physical diff after LZMA reconstruction:
 

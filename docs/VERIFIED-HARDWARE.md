@@ -31,17 +31,7 @@ Each model/revision needs its own chipset identification, flash map, permissions
 
 ## Reference hashes
 
-The reference DS713+ produced two byte-identical 2 MiB BIOS reads:
-
-```text
-<reference-unit-sha256-redacted>
-```
-
-Historical first candidate:
-
-```text
-<reference-unit-sha256-redacted>
-```
+Reference-unit BIOS and candidate digests are intentionally not published because they are unit-specific evidence, not compatibility constants.
 
 Known-good bridge binaries from the physical v9.1 experiment:
 
@@ -50,4 +40,4 @@ DS713Bridge v9.1  2c5a336e52a3d89bcf8029c85818ecbeb2a9477c6dd8367227c7027b5cc833
 XhciDxe            20c3dbda0e0720fe171a7c0b06c995c4fe319f7338acfb75e9b5ee271a3092b3
 ```
 
-These hashes document the reference experiment; hardware compatibility still comes from the safety probes and actual boot evidence.
+The bridge hashes above identify reproducible software artifacts; hardware compatibility still comes from the safety probes and actual boot evidence.

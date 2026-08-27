@@ -4,25 +4,13 @@ Ces valeurs documentent le premier test DS713+ entièrement validé. Ce ne sont 
 
 ## Lectures firmware
 
-```text
-BIOS 2 Mio, lectures #1/#2 :
-<reference-unit-sha256-redacted>
-
-Conteneur 4 Mio des régions définies IFD, lectures #1/#2 :
-<reference-unit-sha256-redacted>
-```
+Les SHA-256 de l'unité de référence ne sont volontairement pas publiés. Ce sont des preuves propres à cette unité, pas des constantes de compatibilité ; chaque utilisateur doit valider localement son propre double dump.
 
 Le conteneur 4 Mio **n'est pas un dump physique complet** : le hardware sequencing échoue à `0x211000`, juste après la région BIOS définie.
 
 ## Premier candidat audité manuellement
 
-```text
-Candidat BIOS 2 Mio :
-<reference-unit-sha256-redacted>
-
-Conteneur candidat 4 Mio :
-<reference-unit-sha256-redacted>
-```
+Les empreintes du candidat et du conteneur de l'unité de référence ne sont volontairement pas publiées. Le dépôt dérive et vérifie le candidat de chaque utilisateur à partir de son propre dump firmware.
 
 Diff physique après reconstruction LZMA :
 

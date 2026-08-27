@@ -4,6 +4,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **[🇫🇷 Version française](README.fr.md)** ·
+[Quick start](docs/QUICKSTART.md) ·
+[Rear USB3 bridge](docs/USB3-BRIDGE.md) ·
 [Choose an OS](docs/OS-OPTIONS.md) ·
 [RAM upgrade](docs/RAM-UPGRADE.md) ·
 [Verified hardware](docs/VERIFIED-HARDWARE.md) ·
@@ -16,6 +18,26 @@ The **DS713+ is still useful hardware**: Intel x86-64 CPU, two SATA bays, dual G
 Synology now lists the DS713+ as **Discontinued**, **DSM Update End of Life**, with **Limited** technical support. Its last upgradable DSM branch is **DSM 7.1**, and Synology's Download Center currently tops out at **DSM 7.1.1**.
 
 This project takes a different route: keep the hardware, remove the firmware's Synology-only USB VID/PID check, and use the machine as a normal small x86-64 server/NAS.
+
+---
+
+## Start here
+
+There are **two separate stages**. Do not mix them:
+
+1. **Firmware unlock (required once):** while the NAS still runs DSM, use a Linux workstation + DSM admin SSH to remove the `F400:F400` restriction. The scripts double-dump, validate the exact DS713+ profile, calculate the physical patch zone, require a separate arm step, attempt rollback on verification failure, and refuse reboot clearance until the whole BIOS region verifies twice.
+2. **Rear USB3 bridge (optional, but recommended if the OS lives on a rear port):** create a tiny front/DOM bridge key with `sudo SDX=sdb ./scripts/10-create-usb3-bridge.sh`. It loads the validated xHCI path and chainloads the rear medium's standard `\EFI\BOOT\BOOTX64.EFI`.
+
+**Fastest route:** follow **[Quick start](docs/QUICKSTART.md)** from top to bottom. Read **[Safety](docs/SAFETY.md)** before the firmware write.
+
+```text
+DSM still running
+  -> 00..06 audit/build/preflight
+  -> 07 prepare -> status -> arm -> status
+  -> 08 full BIOS verify -> READY_FOR_REBOOT=YES
+  -> reboot/test normal non-F400 USB
+  -> optional 10-create-usb3-bridge.sh for rear Etron boot
+```
 
 ---
 
@@ -73,8 +95,8 @@ This repo does not mark “should work” as “works”.
 | Front USB 2.0 UEFI boot | ✅ Verified |
 | Debian 13 amd64 | ✅ Verified |
 | Linux userspace + DHCP/network + SSH | ✅ Verified |
-| Rear Etron USB 3.0 port #1 | ❌ Does not boot |
-| Rear Etron USB 3.0 port #2 | ❌ Does not boot |
+| Rear Etron USB 3.0 with F400 patch only | ❌ Not bootable |
+| Rear Etron USB 3.0 through DS713Bridge v9.1 | ✅ Debian 13 → network/SSH verified |
 | Rear USB 3.0 once Linux is running | ✅ Works via `xhci_hcd` |
 
 Reference boot:
@@ -229,26 +251,27 @@ Read **[Safety](docs/SAFETY.md)** and **[Recovery](docs/RECOVERY.md)** before wr
 
 ---
 
-## Why the rear USB 3.0 ports do not boot
+## Rear USB 3.0: what is actually verified
 
-The front port and rear ports are not on the same controller:
+The **F400 firmware patch alone** still does not initialize the rear Etron EJ168A xHCI controller. Both rear ports produced negative cold-boot results in the original v0.1.0 experiment.
+
+The later **DS713Bridge v9.1** experiment solved that separate problem without modifying the OS medium:
 
 ```text
-Front USB 2.0
-└── Intel ICH10 EHCI
-    └── firmware boot works after F400 bypass
-
-Rear USB 3.0
-└── Etron EJ168A xHCI
-    └── Linux driver works after kernel boot
-    └── firmware boot NOT verified / does not work with current patch
+patched Synology firmware
+  -> bridge key in front USB
+  -> DS713Bridge v9.1 + validated XhciDxe
+  -> Etron EJ168A
+  -> rear UEFI medium
+  -> \EFI\BOOT\BOOTX64.EFI
+  -> Debian 13 -> network -> SSH
 ```
 
-Both rear ports were tested with the same known-good Debian USB drive after complete electrical cold boots. Neither booted.
+The bridge does not hard-code an OS, filesystem UUID, disk serial, rear-port number, `BootOrder`, or `BootNext`. The implementation discovers filesystems below the Etron controller and chainloads only the standard removable-media loader.
 
-The current patch only removes the F400 rejection. It does **not** add an EFI xHCI driver such as `XhciDxe`.
+**Physical evidence is controller-level:** a rear-Etron Debian boot to network/SSH is verified. The code is rear-port agnostic, but this repository does not claim that both physical rear connectors were independently re-run A-to-Z with v9.1.
 
-That remains a separate future experiment.
+See **[Rear USB3 bridge](docs/USB3-BRIDGE.md)** for exact hashes, measured timings, and negative experiments.
 
 ---
 

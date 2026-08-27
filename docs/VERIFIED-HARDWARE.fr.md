@@ -1,65 +1,53 @@
 # Matrice du matériel validé
 
-[← Retour au README](../README.fr.md) · [English](VERIFIED-HARDWARE.md)
+[← README](../README.fr.md) · [English](VERIFIED-HARDWARE.md)
 
 ## DS713+ de référence
 
-| Plateforme / port | Statut | Preuve |
+| Plateforme / chemin | Statut | Preuve |
 |---|---|---|
-| Dump / patch / flash firmware DS713+ | **✅ VALIDÉ** | Double dump, validation candidat, écriture ICH10R hwseq, vérification candidat, double vérification région BIOS complète, reboot réussi. |
-| DS713+ — USB 2.0 frontal | **✅ VALIDÉ** | Clé non-F400 `abcd:1234`, Debian 13 UEFI, DOM interne retiré, réseau + SSH atteints. |
-| DS713+ — chemin USB/DOM interne | ⚠️ REMPLACEMENT NON VALIDÉ | Chemin Intel USB2 apparenté, mais boot d'un DOM/périphérique de remplacement arbitraire non testé séparément. |
-| DS713+ — USB3 Etron EJ168A arrière port 1 | **❌ NON BOOTABLE AVEC LE PATCH ACTUEL** | Même clé Debian connue fonctionnelle, cold boot secteur complet, aucune lecture normale / aucun DHCP / SSH. |
-| DS713+ — USB3 Etron EJ168A arrière port 2 | **❌ NON BOOTABLE AVEC LE PATCH ACTUEL** | Même résultat sur le deuxième port ; retest frontal après cold boot réussi. |
-| DS713+ — Etron USB3 après boot Linux | **✅ FONCTIONNE SOUS LINUX** | Debian utilise le contrôleur via `xhci_hcd` ; ça ne prouve pas un support firmware au boot. |
+| Dump → patch → flash firmware | **✅ VALIDÉ** | Double dump, profil ICH10R exact, patchzone dynamique, vérification candidat, double vérification complète BIOS, reboot réussi. |
+| USB 2.0 frontal après unlock F400 | **✅ VALIDÉ** | Debian 13 UEFI non-F400 `abcd:1234` → Linux → réseau → SSH. |
+| Etron arrière, patch F400 seul | **❌ NON BOOTABLE** | Les deux ports physiques arrière ont été testés séparément après cold boot secteur complet avec la même clé Debian connue fonctionnelle. |
+| Etron arrière via DS713Bridge v9.1 | **✅ VALIDÉ** | Bridge en façade + média Debian derrière Etron → loader EFI standard → Debian 13 → réseau/SSH. |
+| Couverture des connecteurs avec v9.1 | **⚠️ PREUVE AU NIVEAU CONTRÔLEUR** | Le code est agnostique du port arrière ; les deux connecteurs n'ont pas chacun été retestés A à Z avec v9.1. |
+| Etron après prise en charge Linux | **✅ VALIDÉ** | Linux utilise l'EJ168A via `xhci_hcd`. La clé de référence négociait 480 Mbit/s ; elle ne prouve pas le SuperSpeed. |
+| Remplacement/placement bridge en DOM interne | **⚠️ POLITIQUE IMPLÉMENTÉE, PAS VALIDÉE A À Z SÉPARÉMENT** | v9.1 contient la politique recovery façade puis arrière pour le DOM ; la preuve actuelle est bridge façade → OS arrière. |
 
 ## Statut des OS
 
 | OS | Statut sur DS713+ |
 |---|---|
-| Debian 13 amd64 | **✅ VALIDÉ** en USB frontal jusqu'à Linux + réseau + SSH |
-| OpenMediaVault 8 | 🟢 Très bon candidat ; base Debian 13 ; pas encore testé A à Z ici |
-| Ubuntu Server 26.04 LTS | 🟢 Candidat plausible ; pas encore testé ici |
-| TrueNAS actuel | 🔴 Déconseillé ; le minimum actuel de 8 Go dépasse les 4 Go max du D2700 |
+| Debian 13 amd64 | **✅ VALIDÉ** en USB2 façade et via l'Etron arrière avec bridge v9.1 |
+| OpenMediaVault 8 | 🟢 Très bon candidat ; base Debian 13 ; pas encore validé A à Z par ce dépôt |
+| Ubuntu Server 26.04 LTS | 🟢 Candidat plausible ; pas encore validé ici |
+| TrueNAS actuel | 🔴 Déconseillé ; les 8 Go actuels dépassent les 4 Go maximum du D2700 |
 
-## Autres Synology à étudier
+## Autres Synology
 
-Ces modèles ne sont **pas validés par ce repo**.
+DS1513+/DS1813+/DS2413+, DS412+/DS1512+/DS1812+, RS812+ et apparentés Cedarview/Granite Well restent **des cibles de recherche uniquement**. Une plateforme similaire n'autorise pas l'utilisation du profil DS713+.
 
-| Modèle(s) | Dernière branche OS Synology | Statut repo |
-|---|---:|---|
-| DS1513+ / DS1813+ / DS2413+ | DSM 7.1 | ❓ Cibles de recherche Granite Well/Cedarview |
-| DS412+ / DS1512+ / DS1812+ | DSM 6.2 | ❓ Génération apparentée / prior art communautaire |
-| RS812+ / x12 apparentés | DSM 6.2 | ❓ Génération apparentée / non validée |
-
-Un nom de plateforme proche ne suffit jamais à autoriser un flash.
-
-Chaque modèle/révision doit avoir ses propres :
-
-1. identification chipset / PCI ;
-2. taille de flash et descriptor map ;
-3. permissions BIOS ;
-4. géométrie d'effacement ;
-5. double dump firmware ;
-6. validation sémantique du module/patch ;
-7. profil de sécurité spécifique.
-
-Utilisez le formulaire hardware report pour partager les résultats probe/dump.
+Chaque modèle/révision doit avoir sa propre identification chipset, map flash, permissions, géométrie d'effacement, double dump, validation sémantique et profil de sécurité.
 
 ## Hashes de référence
 
-Le DS713+ validé a produit deux lectures BIOS 2 Mio strictement identiques :
+Deux lectures BIOS 2 Mio identiques :
 
 ```text
 <reference-unit-sha256-redacted>
 ```
 
-C'est **une preuve historique, pas un hash universel de compatibilité**.
-
-Le premier candidat audité manuellement avait pour SHA-256 :
+Premier candidat historique :
 
 ```text
 <reference-unit-sha256-redacted>
 ```
 
-Une reconstruction valide peut différer au niveau des octets compressés. La validation sémantique/structurelle et le calcul correct de la patchzone physique sont plus importants que l'égalité avec ce hash candidat.
+Binaires bridge connus fonctionnels lors de l'expérience v9.1 :
+
+```text
+DS713Bridge v9.1  2c5a336e52a3d89bcf8029c85818ecbeb2a9477c6dd8367227c7027b5cc833ac
+XhciDxe            20c3dbda0e0720fe171a7c0b06c995c4fe319f7338acfb75e9b5ee271a3092b3
+```
+
+Ces hashes documentent l'expérience de référence ; la compatibilité matérielle reste déterminée par les probes de sécurité et les preuves de boot.

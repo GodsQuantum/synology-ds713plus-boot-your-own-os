@@ -2,7 +2,7 @@
 
 [← Retour au README](../README.fr.md) · [English](OS-OPTIONS.md)
 
-Le patch F400 donne au DS713+ un **chemin de boot USB UEFI normal via le port USB 2.0 frontal**.
+Le patch F400 donne au DS713+ un **chemin de boot USB UEFI normal via le port USB 2.0 frontal**. Le DS713Bridge v9.1 optionnel fournit en plus un chemin validé vers un média OS derrière le contrôleur Etron arrière.
 
 Ça ne veut pas dire que tous les OS x86-64 sont de bonnes cibles. La vraie question est :
 
@@ -117,17 +117,14 @@ Le patch ne change pas la compatibilité Linux. Il supprime seulement le rejet U
 
 ## Support de boot
 
-Le support **réellement validé** est le port USB 2.0 frontal.
+Deux chemins sont validés et doivent être distingués :
 
-Les deux ports USB 3.0 Etron arrière ne bootent pas avec le patch actuel.
+- **USB 2.0 frontal directement après unlock F400** ;
+- **stockage arrière Etron via DS713Bridge v9.1**.
 
-Le repo ne prétend pas encore avoir validé :
+Le patch F400 seul n'initialise pas l'Etron. Le bridge constitue une couche xHCI amovible séparée et chaîne le `\EFI\BOOT\BOOTX64.EFI` standard du média arrière.
 
-- un boot SATA arbitraire ;
-- le remplacement arbitraire du DOM Synology ;
-- le boot firmware depuis l'USB 3.0 arrière.
-
-Ces sujets restent séparés du résultat F400 validé.
+Le boot SATA arbitraire et le remplacement arbitraire du DOM restent des sujets séparés.
 
 ## Sources
 

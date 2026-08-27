@@ -10,3 +10,9 @@
 8. **Stable power strongly recommended.** Prefer a UPS. Software cannot recover from every power-loss or flash-chip failure.
 
 If the status ever becomes `FINAL_STATUS=CRITICAL_DO_NOT_REBOOT`, keep the NAS powered and collect the complete log. Do not power-cycle it.
+
+## Bridge-key safety
+
+`scripts/10-create-usb3-bridge.sh` is destructive to the selected USB disk. It accepts only a whole `/dev/sdX` USB disk, rejects the current system disk and non-USB targets, prints model/serial and requires an exact destructive confirmation unless explicitly automated with `YES=1`.
+
+For fresh bridge builds, exact raw binary identity and source-equivalent rebuilds are reported separately. Do not describe a fresh rebuild as the exact physically tested PE binary unless its SHA-256 matches the known-good reference.

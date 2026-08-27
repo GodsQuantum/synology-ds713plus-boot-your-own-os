@@ -53,6 +53,16 @@ The repository's own reference experiment proves, on one DS713+ profile:
 - two complete BIOS-region verifies before reboot;
 - normal DSM reboot;
 - Debian 13 UEFI boot from a normal non-F400 `abcd:1234` USB drive through the front USB 2.0 port;
-- negative boot result on both rear Etron EJ168A USB 3.0 ports after complete cold-power tests.
+- negative boot result on both rear Etron EJ168A USB 3.0 ports with the **F400-only** firmware path after complete cold-power tests;
+- later positive rear-controller boot through **DS713Bridge v9.1 + XhciDxe**, reaching Debian 13 network/SSH.
 
 See [REFERENCE-RESULTS.md](REFERENCE-RESULTS.md) and [VERIFIED-HARDWARE.md](VERIFIED-HARDWARE.md).
+
+
+## Rear USB3 bridge / xHCI sources
+
+- [TianoCore EDK2 XhciDxe](https://github.com/tianocore/edk2/tree/master/MdeModulePkg/Bus/Pci/XhciDxe) — upstream xHCI DXE used by the bridge experiment; the reference build is pinned to `edk2-stable202605`, commit `b03a21a63e3bd001f52c527e5a57feddb53a690b`.
+- [UEFI specifications](https://uefi.org/specifications) — Driver Binding, device paths, Simple File System and standard removable-media boot path.
+- [OpenCore install guide — XhciDxe](https://dortania.github.io/OpenCore-Install-Guide/installer-guide/opencore-efi.html) — useful prior art for old firmware lacking xHCI support.
+
+The repository's bridge timings and success/failure outcomes are project measurements, not claims made by those upstream sources.

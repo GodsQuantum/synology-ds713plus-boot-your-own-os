@@ -54,3 +54,32 @@ Avec la même clé Debian 13 UEFI (`abcd:1234`) et le DOM interne débranché :
 - **Retest USB2 frontal :** de nouveau réussi après cold boot, confirmant que la clé et l'installation Debian restaient bootables.
 
 Le résultat négatif arrière concerne spécifiquement la modification firmware **F400 seule** actuelle. Le contrôleur Etron est visible et utilisable sous Debian via `xhci_hcd` une fois Linux démarré depuis le port frontal. Aucun driver firmware `XhciDxe` n'a été ajouté par ce patch.
+
+## Expérience bridge — 27/08/2026
+
+L'expérience de boot arrière ultérieure a conservé le patch firmware F400 tel quel et ajouté uniquement un bridge amovible en façade.
+
+```text
+DS713Bridge v9.1 BOOTX64.EFI
+2c5a336e52a3d89bcf8029c85818ecbeb2a9477c6dd8367227c7027b5cc833ac
+
+XhciDxe.efi
+20c3dbda0e0720fe171a7c0b06c995c4fe319f7338acfb75e9b5ee271a3092b3
+```
+
+Résultat : **Debian 13 a booté depuis un stockage derrière le contrôleur Etron jusqu'au réseau/SSH.** Le bridge lui-même prenait environ 3–4 s avant de passer la main au loader OS arrière.
+
+Meilleure référence mesurée avec Limine + initrd réduit :
+
+```text
+firmware   14,600 s
+loader     56,477 s
+kernel      5,483 s
+userspace  21,203 s
+systemd     1m37,765s total
+power-to-network externe  ~117 s
+```
+
+Environ 25,71 Mio étaient lus avant le kernel. Le débit UEFI pré-kernel effectif était ~0,453 Mio/s ; Linux lisait ensuite le même média arrière à ~18,6 Mio/s. Le chargement Limine natif par le port frontal était pire (~359,5 s loader / ~423 s power-to-network) : « natif frontal » n'était donc pas une solution de vitesse.
+
+Une pile stockage EDK2 moderne complète a booté mais régressé à ~199 s jusqu'au réseau. UKI direct et harness diagnostics ultérieurs n'ont pas fourni de voie de déploiement fiable. Ce sont des résultats de recherche, pas des recommandations.

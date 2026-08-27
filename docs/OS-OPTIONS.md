@@ -2,7 +2,7 @@
 
 [← Back to README](../README.md) · [Français](OS-OPTIONS.fr.md)
 
-The F400 firmware patch gives the DS713+ a **normal UEFI USB boot path through the front USB 2.0 port**.
+The F400 firmware patch gives the DS713+ a **normal UEFI USB boot path through the front USB 2.0 port**. The optional DS713Bridge v9.1 additionally provides a verified path to an OS medium behind the rear Etron controller.
 
 It does not mean every x86-64 operating system is a good fit. The useful question is:
 
@@ -117,17 +117,14 @@ The patch does not alter Linux compatibility. It only removes the firmware's Syn
 
 ## Boot media
 
-The **verified** boot device is the front USB 2.0 port.
+Two paths are verified and must be distinguished:
 
-The rear Etron USB 3.0 ports do not boot with the current firmware patch.
+- **front USB 2.0 directly after the F400 unlock**;
+- **rear Etron storage through DS713Bridge v9.1**.
 
-This repository has not yet claimed:
+The F400 patch alone does not initialize Etron. The bridge is a separate removable xHCI pre-boot layer and chainloads the rear medium's standard `\EFI\BOOT\BOOTX64.EFI`.
 
-- arbitrary SATA boot;
-- arbitrary replacement of the internal Synology DOM;
-- rear USB 3.0 firmware boot.
-
-Keep those separate from the verified F400 result.
+Arbitrary SATA boot and arbitrary internal-DOM replacement remain separate questions.
 
 ## Sources
 

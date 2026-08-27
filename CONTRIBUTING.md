@@ -7,3 +7,6 @@ Hardware reports and patches are welcome.
 - A new model is not marked verified until probe/read evidence is distinguished from actual successful write/reboot/boot-device evidence.
 - Changes to `scripts/07-flash.sh` or safety gates should include a clear failure-mode analysis.
 - Run `make lint` before opening a PR.
+
+- Bridge changes should preserve the distinction between **F400-only rear negative results** and **rear-controller boot through DS713Bridge v9.1**. Do not infer that both physical rear connectors were independently validated unless you have that evidence.
+- Run the repository consistency and Markdown-link tests through `make lint` before opening a PR.

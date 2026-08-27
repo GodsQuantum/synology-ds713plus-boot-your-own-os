@@ -1,18 +1,42 @@
-# Test de boot USB
+# Boot USB sur le DS713+
 
-Test le plus propre sur DS713+ :
+[← README](../README.fr.md) · [English](USB-BOOT.md) · [Démarrage rapide](QUICKSTART.fr.md)
 
-1. après flash et double vérification, redémarrer une fois DSM ;
-2. arrêt propre ;
-3. débrancher l'alimentation assez longtemps pour réinitialiser complètement la plateforme ;
-4. DOM Synology interne temporairement retiré ;
-5. clé **UEFI x86-64** connue fonctionnelle sur l'USB2 frontal ;
-6. rallumer et chercher DHCP/SSH ou toute preuve de démarrage de l'OS.
+## Deux résultats différents à ne pas confondre
 
-Une installation GRUB legacy/MBR uniquement n'est pas un test négatif valable du patch EFI. Préférer GPT + ESP avec `EFI/BOOT/BOOTX64.EFI` ou un chemin EFI résolvable.
+### Patch firmware F400 seul
 
-## Résultat USB3 arrière Etron
+L'expérience v0.1.0 a supprimé la restriction VID/PID Synology `F400:F400`. DOM interne retiré, une clé Debian 13 UEFI ordinaire `abcd:1234` a booté par **l'USB 2.0 frontal** jusqu'à Linux, réseau et SSH.
 
-Les deux ports USB3 arrière du DS713+ validé ont été testés avec la même clé Debian 13 UEFI ordinaire `abcd:1234` qui démarre correctement en USB2 frontal. Chaque essai arrière a été effectué après arrêt propre de l'OS puis coupure complète de l'alimentation. Aucun des deux ports arrière n'a montré l'activité de lecture USB normale observée pendant le boot frontal, et aucun boot Debian DHCP/SSH n'est apparu. Un cold boot suivant sur le port frontal a de nouveau réussi.
+La même clé a ensuite été testée sur **les deux ports Etron EJ168A arrière** après coupure secteur complète. Aucun n'a booté. Ce résultat négatif reste valide pour le **patch firmware F400 seul**.
 
-Il s'agit donc d'un **résultat négatif pour le boot arrière avec le patch F400 seul**, et non d'un échec du déverrouillage F400. Les ports arrière dépendent du contrôleur xHCI Etron EJ168A ; Linux sait l'utiliser via `xhci_hcd` une fois le noyau déjà démarré. Le patch BIOS actuel supprime uniquement le rejet VID/PID F400 et **n'ajoute pas** de driver firmware `XhciDxe`. L'ajout/test d'un driver EFI xHCI constitue une expérience future séparée.
+### Patch F400 + DS713Bridge v9.1
+
+Une expérience ultérieure a placé le bridge en façade et le média Debian derrière l'Etron. DS713Bridge v9.1 a chargé le `XhciDxe` validé, découvert un filesystem arrière descendant de l'Etron puis chainloadé `\EFI\BOOT\BOOTX64.EFI`. Debian a atteint le réseau/SSH.
+
+Cela prouve le boot via le contrôleur arrière au travers du bridge. L'implémentation ne code aucun port arrière en dur, mais le dépôt ne prétend pas que les deux connecteurs physiques aient chacun été retestés A à Z avec v9.1.
+
+## Média de test valide
+
+Utilisez une installation UEFI x86-64 avec GPT/ESP et de préférence le loader fallback standard :
+
+```text
+\EFI\BOOT\BOOTX64.EFI
+```
+
+Une installation GRUB legacy/MBR uniquement n'est pas un test négatif valable du chemin EFI.
+
+## Disposition bridge
+
+```text
+USB 2.0 façade : DS713Bridge v9.1
+Etron arrière  : média OS avec \EFI\BOOT\BOOTX64.EFI
+```
+
+Création :
+
+```bash
+sudo SDX=sdb ./scripts/10-create-usb3-bridge.sh
+```
+
+Voir [Bridge USB3 arrière](USB3-BRIDGE.fr.md) pour l'architecture, les hashes et les performances mesurées.

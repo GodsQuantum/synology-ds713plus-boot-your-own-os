@@ -1,65 +1,53 @@
 # Verified hardware matrix
 
-[← Back to README](../README.md) · [Français](VERIFIED-HARDWARE.fr.md)
+[← README](../README.md) · [Français](VERIFIED-HARDWARE.fr.md)
 
 ## DS713+ reference unit
 
-| Platform / port | Status | Evidence |
+| Platform / path | Status | Evidence |
 |---|---|---|
-| DS713+ firmware dump / patch / flash | **✅ VERIFIED** | Double dump, candidate validation, ICH10R hwseq write, candidate verify, two full BIOS-region verifies, successful reboot. |
-| DS713+ — front USB 2.0 | **✅ VERIFIED** | Non-F400 `abcd:1234` drive; Debian 13 UEFI booted with internal DOM disconnected; network + SSH reached. |
-| DS713+ — internal USB/DOM path | ⚠️ UNVERIFIED REPLACEMENT | Related Intel USB2 path, but arbitrary replacement DOM/device boot has not been separately validated. |
-| DS713+ — rear USB3 Etron EJ168A, port 1 | **❌ NOT BOOTABLE WITH CURRENT PATCH** | Same known-good Debian USB, full AC cold boot, no normal read activity / DHCP / SSH boot. |
-| DS713+ — rear USB3 Etron EJ168A, port 2 | **❌ NOT BOOTABLE WITH CURRENT PATCH** | Same negative result on the second rear port; front-port cold retest succeeded. |
-| DS713+ — Etron USB3 after Linux boot | **✅ WORKS IN LINUX** | Debian sees/uses the controller through `xhci_hcd`; this does not imply firmware boot support. |
+| Firmware dump → patch → flash | **✅ VERIFIED** | Double dump, exact ICH10R profile, dynamic patchzone, candidate verify, two full BIOS-region verifies, successful reboot. |
+| Front USB 2.0 after F400 unlock | **✅ VERIFIED** | Ordinary non-F400 `abcd:1234` Debian 13 UEFI drive → userspace → network → SSH. |
+| Rear Etron, F400 patch only | **❌ NOT BOOTABLE** | Both physical rear ports tested independently after full AC cold boots with the same known-good Debian drive. |
+| Rear Etron through DS713Bridge v9.1 | **✅ VERIFIED** | Bridge in front + Debian medium behind Etron → standard EFI loader → Debian 13 → network/SSH. |
+| v9.1 physical connector coverage | **⚠️ CONTROLLER-LEVEL EVIDENCE** | Bridge code is rear-port agnostic; both rear connectors were not independently re-run A-to-Z with v9.1. |
+| Etron after Linux takeover | **✅ VERIFIED** | Linux uses EJ168A through `xhci_hcd`. Reference flash medium negotiated 480 Mbit/s; that medium does not prove SuperSpeed. |
+| Internal DOM replacement / bridge placement | **⚠️ POLICY IMPLEMENTED, NOT SEPARATELY A-TO-Z VERIFIED** | v9.1 contains front-recovery-then-rear policy for DOM placement; current deployment evidence is front bridge → rear OS. |
 
 ## OS status
 
 | OS | Status on DS713+ |
 |---|---|
-| Debian 13 amd64 | **✅ VERIFIED** from front USB2 to userspace + network + SSH |
-| OpenMediaVault 8 | 🟢 Strong candidate; Debian 13 based; not yet A-to-Z tested by this repo |
-| Ubuntu Server 26.04 LTS | 🟢 Plausible candidate; not yet tested by this repo |
-| Current TrueNAS | 🔴 Not recommended; current 8 GB RAM baseline exceeds D2700 4 GB maximum |
+| Debian 13 amd64 | **✅ VERIFIED** from front USB2 and via rear Etron using v9.1 bridge |
+| OpenMediaVault 8 | 🟢 Strong candidate; Debian 13 based; not yet A-to-Z validated by this repository |
+| Ubuntu Server 26.04 LTS | 🟢 Plausible candidate; not yet validated here |
+| Current TrueNAS | 🔴 Not recommended; current 8 GB RAM baseline exceeds the D2700 4 GB maximum |
 
 ## Related Synology research targets
 
-These models are **not verified by this repository**.
+DS1513+/DS1813+/DS2413+, DS412+/DS1512+/DS1812+, RS812+ and related Cedarview/Granite Well machines are **research targets only**. A similar platform name does not authorize flashing a DS713+ profile.
 
-| Model(s) | Synology last OS branch | Repo status |
-|---|---:|---|
-| DS1513+ / DS1813+ / DS2413+ | DSM 7.1 | ❓ Granite Well/Cedarview-era research targets |
-| DS412+ / DS1512+ / DS1812+ | DSM 6.2 | ❓ Related generation / community prior art |
-| RS812+ / related x12 units | DSM 6.2 | ❓ Related generation / unverified |
-
-A related platform name is not enough to authorize a write.
-
-Each model/revision needs its own:
-
-1. chipset / PCI identification;
-2. flash size and descriptor map;
-3. BIOS permissions;
-4. erase geometry;
-5. double firmware dump;
-6. module/patch semantic validation;
-7. model-specific safe profile.
-
-Use the hardware-report issue form for probe/dump evidence.
+Each model/revision needs its own chipset identification, flash map, permissions, erase geometry, double dump, semantic patch validation and safe profile.
 
 ## Reference hashes
 
-The verified DS713+ unit produced two byte-identical 2 MiB BIOS reads:
+The reference DS713+ produced two byte-identical 2 MiB BIOS reads:
 
 ```text
 <reference-unit-sha256-redacted>
 ```
 
-This is **historical evidence, not a universal compatibility hash**.
-
-The manually audited first candidate had SHA-256:
+Historical first candidate:
 
 ```text
 <reference-unit-sha256-redacted>
 ```
 
-A valid rebuild can differ at compressed-byte level. Semantic/structural verification and a correctly calculated physical patchzone matter more than matching this candidate hash.
+Known-good bridge binaries from the physical v9.1 experiment:
+
+```text
+DS713Bridge v9.1  2c5a336e52a3d89bcf8029c85818ecbeb2a9477c6dd8367227c7027b5cc833ac
+XhciDxe            20c3dbda0e0720fe171a7c0b06c995c4fe319f7338acfb75e9b5ee271a3092b3
+```
+
+These hashes document the reference experiment; hardware compatibility still comes from the safety probes and actual boot evidence.

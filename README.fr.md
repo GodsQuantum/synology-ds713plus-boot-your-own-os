@@ -4,6 +4,8 @@
 [![Licence : MIT](https://img.shields.io/badge/Licence-MIT-yellow.svg)](LICENSE)
 
 **[🇬🇧 English version](README.md)** ·
+[Démarrage rapide](docs/QUICKSTART.fr.md) ·
+[Bridge USB3 arrière](docs/USB3-BRIDGE.fr.md) ·
 [Choisir un OS](docs/OS-OPTIONS.fr.md) ·
 [Upgrade RAM](docs/RAM-UPGRADE.fr.md) ·
 [Matériel validé](docs/VERIFIED-HARDWARE.fr.md) ·
@@ -16,6 +18,26 @@ Le **DS713+ reste un petit serveur x86-64 tout à fait exploitable** : deux baie
 Synology classe aujourd'hui le DS713+ comme **produit arrêté**, avec **mises à jour DSM en fin de vie** et **support technique limité**. Sa dernière branche DSM officiellement accessible est **DSM 7.1**, et le Download Center Synology s'arrête actuellement à **DSM 7.1.1**.
 
 L'idée du projet est donc simple : garder le hardware, enlever le verrou USB spécifique à Synology, et utiliser la machine comme un petit serveur/NAS x86-64 normal.
+
+---
+
+## Commencer ici
+
+Il y a **deux étapes distinctes**. Ne les mélangez pas :
+
+1. **Déverrouillage firmware (une seule fois, obligatoire) :** tant que le NAS tourne encore sous DSM, utilisez un poste Linux + un compte admin DSM en SSH pour supprimer la restriction `F400:F400`. Le workflow double-dumpe le BIOS, valide le profil exact du DS713+, calcule la patchzone physique, exige une étape d'armement séparée, tente un rollback si la vérification échoue et ne donne l'autorisation de reboot qu'après deux vérifications complètes de la région BIOS.
+2. **Bridge USB3 arrière (optionnel, recommandé si l'OS doit vivre derrière) :** créez une petite clé bridge façade/DOM avec `sudo SDX=sdb ./scripts/10-create-usb3-bridge.sh`. Elle initialise le chemin xHCI validé puis chaîne le `\EFI\BOOT\BOOTX64.EFI` standard du média arrière.
+
+**Chemin le plus simple :** suivez **[Démarrage rapide](docs/QUICKSTART.fr.md)** de haut en bas. Lisez **[Sécurité](docs/SAFETY.fr.md)** avant toute écriture firmware.
+
+```text
+DSM encore actif
+  -> 00..06 audit/build/preflight
+  -> 07 prepare -> status -> arm -> status
+  -> 08 double vérification BIOS -> READY_FOR_REBOOT=YES
+  -> reboot/test d'une clé non-F400 normale
+  -> optionnel : 10-create-usb3-bridge.sh pour booter via l'Etron arrière
+```
 
 ---
 
@@ -73,8 +95,8 @@ Ici, « devrait fonctionner » n'est pas transformé en « fonctionne ».
 | Boot UEFI par USB 2.0 frontal | ✅ Validé |
 | Debian 13 amd64 | ✅ Validé |
 | Linux + DHCP/réseau + SSH | ✅ Validé |
-| USB 3.0 arrière Etron #1 | ❌ Ne boote pas |
-| USB 3.0 arrière Etron #2 | ❌ Ne boote pas |
+| USB 3.0 arrière Etron avec patch F400 seul | ❌ Non bootable |
+| USB 3.0 arrière via DS713Bridge v9.1 | ✅ Debian 13 → réseau/SSH validé |
 | USB 3.0 arrière après lancement Linux | ✅ Fonctionne via `xhci_hcd` |
 
 Boot de référence :
@@ -229,26 +251,27 @@ Lire **[Sécurité](docs/SAFETY.fr.md)** et **[Récupération](docs/RECOVERY.fr.
 
 ---
 
-## Pourquoi les USB 3.0 arrière ne bootent pas
+## USB 3.0 arrière : ce qui est réellement validé
 
-Les ports façade et arrière ne dépendent pas du même contrôleur :
+Le **patch firmware F400 seul** n'initialise toujours pas le contrôleur xHCI Etron EJ168A arrière. Les deux ports avaient donné un résultat négatif lors des cold boots de l'expérience v0.1.0.
+
+L'expérience ultérieure **DS713Bridge v9.1** résout ce problème distinct sans modifier le média OS :
 
 ```text
-USB 2.0 façade
-└── Intel ICH10 EHCI
-    └── boot firmware fonctionnel après bypass F400
-
-USB 3.0 arrière
-└── Etron EJ168A xHCI
-    └── fonctionne sous Linux une fois le kernel lancé
-    └── ne boote pas avec le patch actuel
+firmware Synology patché
+  -> clé bridge en façade
+  -> DS713Bridge v9.1 + XhciDxe validé
+  -> Etron EJ168A
+  -> média UEFI arrière
+  -> \EFI\BOOT\BOOTX64.EFI
+  -> Debian 13 -> réseau -> SSH
 ```
 
-Les deux ports arrière ont été testés avec la même clé Debian connue fonctionnelle, après de vraies coupures électriques complètes. Aucun n'a booté.
+Le bridge ne code en dur ni OS, ni UUID, ni serial disque, ni numéro de port arrière, ni `BootOrder`, ni `BootNext`. Il découvre les filesystems descendants de l'Etron et chaîne uniquement le loader amovible standard.
 
-Le patch actuel enlève uniquement le rejet F400. Il **n'ajoute pas** de driver EFI xHCI comme `XhciDxe`.
+**La preuve physique est au niveau du contrôleur arrière :** un boot Debian via Etron jusqu'au réseau/SSH est validé. Le code est agnostique du port, mais le dépôt ne prétend pas que les deux connecteurs physiques ont chacun été retestés A à Z avec v9.1.
 
-C'est une expérience future séparée.
+Voir **[Bridge USB3 arrière](docs/USB3-BRIDGE.fr.md)** pour les hashes, chronos et expériences négatives.
 
 ---
 

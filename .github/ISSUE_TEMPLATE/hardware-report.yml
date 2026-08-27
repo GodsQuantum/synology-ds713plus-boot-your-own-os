@@ -50,6 +50,7 @@ body:
         - Flash written and verified
         - DSM reboot verified
         - Non-F400 USB boot verified
+        - Rear USB3 bridge boot verified
         - Alternative OS userspace/network verified
     validations:
       required: true

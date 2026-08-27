@@ -10,3 +10,9 @@
 8. **Alimentation stable / onduleur fortement conseillé.** Aucun logiciel ne peut éliminer tous les risques matériels.
 
 Si `FINAL_STATUS=CRITICAL_DO_NOT_REBOOT`, ne coupez pas le NAS et récupérez le log complet.
+
+## Sécurité de la clé bridge
+
+`scripts/10-create-usb3-bridge.sh` efface entièrement le disque USB sélectionné. Il n'accepte qu'un disque USB entier `/dev/sdX`, refuse le disque système courant et les cibles non USB, affiche modèle/serial puis exige une confirmation destructive exacte sauf automatisation explicite avec `YES=1`.
+
+Pour un build bridge neuf, le script distingue l'identité binaire brute exacte des rebuilds équivalents par source/normalisation. Ne présentez pas un rebuild frais comme le PE physiquement testé exact si son SHA-256 ne correspond pas à la référence connue.

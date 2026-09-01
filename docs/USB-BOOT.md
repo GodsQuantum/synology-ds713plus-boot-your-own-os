@@ -40,3 +40,9 @@ sudo SDX=sdb ./scripts/10-create-usb3-bridge.sh
 ```
 
 See [Rear USB3 bridge](USB3-BRIDGE.md) for architecture, hashes and measured performance.
+
+### DS713Bridge v9.4 FULL-STACK R2
+
+The F400 firmware patch alone still does not initialize the rear Etron controller for boot. The physically validated v9.4 path is separate: a v9.4 bridge key on the front USB port loads a modern EDK2 xHCI/USB/storage/filesystem stack and successfully boots the existing Linux system SSD from the rear Etron controller to userspace, network and SSH.
+
+Use `scripts/12-create-usb3-bridge-v94.sh` for the current recommended rear-SSD bridge. DS713Bridge v9.1 remains the historical minimal-stack Debian reference.

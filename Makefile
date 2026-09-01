@@ -12,5 +12,7 @@ lint:
 	@python3 bridge/test_v91_static.py
 	@python3 bridge/test_v93_static.py
 	@python3 tests/test_v93_writer.py
+	@python3 bridge/test_v94_static.py
+	@python3 tests/test_v94_writer.py
 
 test: lint

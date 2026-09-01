@@ -70,7 +70,7 @@ If you want the OS medium on a rear port, create a second small USB key as the b
 lsblk -o NAME,PATH,TRAN,SIZE,FSTYPE,LABEL,MODEL,SERIAL,MOUNTPOINTS
 
 # Example only: replace sdb with the USB key you intend to ERASE.
-sudo SDX=sdb ./scripts/10-create-usb3-bridge.sh
+sudo SDX=sdb ./scripts/12-create-usb3-bridge-v94.sh
 ```
 
 The writer refuses the current system disk, non-USB targets and non-whole-disk targets, then asks for an exact destructive confirmation.

@@ -26,7 +26,7 @@ This project takes a different route: keep the hardware, remove the firmware's S
 There are **two separate stages**. Do not mix them:
 
 1. **Firmware unlock (required once):** while the NAS still runs DSM, use a Linux workstation + DSM admin SSH to remove the `F400:F400` restriction. The scripts double-dump, validate the exact DS713+ profile, calculate the physical patch zone, require a separate arm step, attempt rollback on verification failure, and refuse reboot clearance until the whole BIOS region verifies twice.
-2. **Rear USB3 bridge (optional, but recommended if the OS lives on a rear port):** create a tiny front/DOM bridge key with `sudo SDX=sdb ./scripts/10-create-usb3-bridge.sh`. It loads the validated xHCI path and chainloads the rear medium's standard `\EFI\BOOT\BOOTX64.EFI`.
+2. **Rear USB3 bridge (optional, but recommended if the OS lives on a rear port):** create the physically validated v9.4 full-stack bridge with `./scripts/12-create-usb3-bridge-v94.sh`. It loads a modern EDK2 xHCI/USB/storage/filesystem stack and chainloads the rear medium's standard `\EFI\BOOT\BOOTX64.EFI`. The v9.1 writer remains available for historical reproduction.
 
 **Fastest route:** follow **[Quick start](docs/QUICKSTART.md)** from top to bottom. Read **[Safety](docs/SAFETY.md)** before the firmware write.
 
@@ -36,7 +36,7 @@ DSM still running
   -> 07 prepare -> status -> arm -> status
   -> 08 full BIOS verify -> READY_FOR_REBOOT=YES
   -> reboot/test normal non-F400 USB
-  -> optional 10-create-usb3-bridge.sh for rear Etron boot
+  -> optional 12-create-usb3-bridge-v94.sh for rear Etron boot
 ```
 
 ---
@@ -51,7 +51,7 @@ DSM still running
 | Normal USB boot | ❌ Firmware expects `F400:F400` | ✅ Normal non-F400 USB boot verified |
 | Debian 13 | Not a normal supported boot path | ✅ **Verified A-to-Z** |
 | OpenMediaVault 8 | Not a Synology-supported option | 🟢 Strong candidate |
-| Ubuntu Server 26.04 LTS | Not a Synology-supported option | 🟢 Plausible candidate |
+| Ubuntu Server 26.04 LTS | Not a Synology-supported option | ✅ Existing Ubuntu system SSD boot verified via rear Etron with v9.4; installer path not separately validated |
 | Current TrueNAS | Not a Synology-supported option | 🔴 Not a sensible target: 8 GB minimum RAM |
 | Hardware | Same 2012 NAS | Same hardware, under your control |
 
@@ -97,6 +97,7 @@ This repo does not mark “should work” as “works”.
 | Linux userspace + DHCP/network + SSH | ✅ Verified |
 | Rear Etron USB 3.0 with F400 patch only | ❌ Not bootable |
 | Rear Etron USB 3.0 through DS713Bridge v9.1 | ✅ Debian 13 → network/SSH verified |
+| Rear Etron USB 3.0 through DS713Bridge v9.4 FULL-STACK R2 | ✅ Ubuntu/Linux system SSD → network/SSH verified |
 | Rear USB 3.0 once Linux is running | ✅ Works via `xhci_hcd` |
 
 Reference boot:
@@ -132,11 +133,11 @@ That makes it a very natural candidate for the DS713+, especially after a 2 GB o
 
 It has **not yet been installed A-to-Z by this repository**, so it is deliberately marked as a candidate rather than verified.
 
-### 🟢 Ubuntu Server 26.04 LTS — plausible
+### ✅ Ubuntu Server 26.04 LTS — existing system boot verified
 
 Ubuntu Server 26.04 has an amd64 installer and can start around 1.5 GB RAM depending on installation/use case.
 
-The D2700 is Intel 64, so the basic architecture matches. Hardware-specific installation on the DS713+ is still unverified here.
+The D2700 is Intel 64, and an existing Ubuntu Server 26.04 system SSD has now booted through the rear Etron controller using DS713Bridge v9.4 to network/SSH. The Ubuntu installer path itself has not been separately validated.
 
 ### 🔴 Current TrueNAS — skip it on this machine
 
@@ -252,6 +253,8 @@ Read **[Safety](docs/SAFETY.md)** and **[Recovery](docs/RECOVERY.md)** before wr
 ---
 
 ## Rear USB 3.0: what is actually verified
+
+**Current recommended deployment: DS713Bridge v9.4 FULL-STACK R2.** On 2026-09-01, a v9.4 key in the front USB port successfully booted the existing Ubuntu/Linux system SSD through the rear Etron controller to network/SSH. Unlike the minimal v9.1 path, v9.4 loads `XhciDxe`, `UsbBusDxe`, `UsbMassStorageDxe`, `DiskIoDxe`, `PartitionDxe`, `EnglishDxe`, and `Fat` and binds them through `EFI_DRIVER_BINDING_PROTOCOL`. See [the v9.4 guide](docs/USB3-BRIDGE-V94.md).
 
 The **F400 firmware patch alone** still does not initialize the rear Etron EJ168A xHCI controller. Both rear ports produced negative cold-boot results in the original v0.1.0 experiment.
 

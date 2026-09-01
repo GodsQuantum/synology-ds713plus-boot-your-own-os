@@ -70,7 +70,7 @@ Pour placer le média OS derrière, créez une deuxième petite clé bridge depu
 lsblk -o NAME,PATH,TRAN,SIZE,FSTYPE,LABEL,MODEL,SERIAL,MOUNTPOINTS
 
 # Exemple uniquement : remplacez sdb par la clé USB que vous acceptez d'EFFACER.
-sudo SDX=sdb ./scripts/10-create-usb3-bridge.sh
+sudo SDX=sdb ./scripts/12-create-usb3-bridge-v94.sh
 ```
 
 Le writer refuse le disque système, les cibles non USB et les cibles qui ne sont pas un disque entier, puis exige une confirmation destructive exacte.

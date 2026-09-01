@@ -71,3 +71,14 @@ external power-to-network  ~117 s
 About 25.71 MiB was loaded before the kernel. Effective pre-kernel UEFI throughput was ~0.453 MiB/s; Linux read the same rear medium at ~18.6 MiB/s after takeover. Native front-firmware Limine loading was worse (~359.5 s loader / ~423 s power-to-network), so “native front” was not a speed solution.
 
 An experimental full modern EDK2 storage stack booted but regressed to ~199 s power-to-network. Direct UKI and later diagnostic harnesses did not produce a reliable deployment path. They remain research results, not recommendations.
+
+## DS713Bridge v9.4 FULL-STACK R2 — physical validation (2026-09-01)
+
+- front USB: v9.4 bridge key;
+- rear Etron: existing Ubuntu/Linux system SSD;
+- result: OS reached userspace, network and SSH;
+- exact creator SHA-256: `6af4b3291f058093a9d2673a51596bb0525b57d5a818587166575f86709f206b`;
+- embedded source SHA-256: `75e00a082b11dbb9684eb240f77dbdbe3cfde952b90f7e4f8274020432a0ba39`;
+- default EDK2 profile: `edk2-stable202605` / `b03a21a63e3bd001f52c527e5a57feddb53a690b`;
+- full stack: `XhciDxe`, `UsbBusDxe`, `UsbMassStorageDxe`, `DiskIoDxe`, `PartitionDxe`, `EnglishDxe`, `Fat`;
+- negotiated USB speed/UAS/TRIM and exact power-to-SSH timing are measured separately after Linux boot.

@@ -13,14 +13,16 @@ profile = read('profiles/ds713plus.env')
 need('BIOS_START=0x011000' in profile and 'BIOS_END=0x210fff' in profile, 'profile BIOS bounds changed')
 need('ERASE_BLOCK_BYTES=4096' in profile, 'profile erase size changed')
 
-need(read('VERSION').strip() == '0.2.0', 'VERSION must be 0.2.0')
-need('version: 0.2.0' in read('CITATION.cff'), 'CITATION version mismatch')
+need(read('VERSION').strip() == '0.3.0', 'VERSION must be 0.3.0')
+need('version: 0.3.0' in read('CITATION.cff'), 'CITATION version mismatch')
 
 required = [
     'README.md','README.fr.md','docs/QUICKSTART.md','docs/QUICKSTART.fr.md',
     'docs/USB3-BRIDGE.md','docs/USB3-BRIDGE.fr.md','docs/USB-BOOT.md','docs/USB-BOOT.fr.md',
     'docs/VERIFIED-HARDWARE.md','docs/VERIFIED-HARDWARE.fr.md',
-    'bridge/DS713Bridge-v9.1.c','scripts/10-create-usb3-bridge.sh'
+    'bridge/DS713Bridge-v9.1.c','scripts/10-create-usb3-bridge.sh',
+    'bridge/DS713Bridge-v9.4.c','scripts/12-create-usb3-bridge-v94.sh',
+    'docs/USB3-BRIDGE-V94.md','docs/USB3-BRIDGE-V94.fr.md'
 ]
 for p in required: need((root/p).is_file(), f'missing {p}')
 
@@ -28,10 +30,11 @@ for p in ['README.md','docs/USB-BOOT.md','docs/VERIFIED-HARDWARE.md','docs/OS-OP
     s=read(p)
     need('F400-only' in s or 'F400 patch only' in s or 'F400 patch alone' in s or 'F400 firmware patch alone' in s, f'{p}: F400-only distinction missing')
     need('DS713Bridge v9.1' in s, f'{p}: v9.1 result missing')
+    need('DS713Bridge v9.4' in s, f'{p}: v9.4 result missing')
 
 for p in ['README.fr.md','docs/USB-BOOT.fr.md','docs/VERIFIED-HARDWARE.fr.md','docs/OS-OPTIONS.fr.md']:
     s=read(p)
-    need('F400' in s and 'DS713Bridge v9.1' in s, f'{p}: distinction/result missing')
+    need('F400' in s and 'DS713Bridge v9.1' in s and 'DS713Bridge v9.4' in s, f'{p}: distinction/result missing')
 
 for stale in [
     'Rear USB 3.0 port #1 | ❌ Does not boot',
@@ -58,3 +61,10 @@ need('08ed5ccde46679998fa4ae21346e755b4451617f70348bacdf872b636f55b708' in build
 need('89a7ff5beb08c89b8795bbd253a51b9453547a864c31793302296b56bbc56d65' in build, 'flashrom source hash missing')
 
 print('REPO_CONSISTENCY_TESTS=PASS')
+
+# v9.4 exact physically validated artifact gates
+v94=read('bridge/DS713Bridge-v9.4.c')
+v94_writer=read('scripts/12-create-usb3-bridge-v94.sh')
+need('DS713Bridge v9.4 FULL-STACK R2' in v94, 'v9.4 source identity missing')
+need('DS713Bridge v9.4 FULL-STACK R2' in v94_writer, 'v9.4 writer identity missing')
+need('6af4b3291f058093a9d2673a51596bb0525b57d5a818587166575f86709f206b' in read('docs/USB3-BRIDGE-V94.md'), 'v9.4 writer hash missing from docs')

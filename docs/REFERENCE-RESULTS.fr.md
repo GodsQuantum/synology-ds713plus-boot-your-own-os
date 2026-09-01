@@ -71,3 +71,14 @@ power-to-network externe  ~117 s
 Environ 25,71 Mio étaient lus avant le kernel. Le débit UEFI pré-kernel effectif était ~0,453 Mio/s ; Linux lisait ensuite le même média arrière à ~18,6 Mio/s. Le chargement Limine natif par le port frontal était pire (~359,5 s loader / ~423 s power-to-network) : « natif frontal » n'était donc pas une solution de vitesse.
 
 Une pile stockage EDK2 moderne complète a booté mais régressé à ~199 s jusqu'au réseau. UKI direct et harness diagnostics ultérieurs n'ont pas fourni de voie de déploiement fiable. Ce sont des résultats de recherche, pas des recommandations.
+
+## DS713Bridge v9.4 FULL-STACK R2 — validation physique (2026-09-01)
+
+- USB façade : clé bridge v9.4 ;
+- Etron arrière : SSD système Ubuntu/Linux existant ;
+- résultat : Linux, réseau et SSH atteints ;
+- SHA-256 creator exact : `6af4b3291f058093a9d2673a51596bb0525b57d5a818587166575f86709f206b` ;
+- SHA-256 source embarquée : `75e00a082b11dbb9684eb240f77dbdbe3cfde952b90f7e4f8274020432a0ba39` ;
+- profil EDK2 par défaut : `edk2-stable202605` / `b03a21a63e3bd001f52c527e5a57feddb53a690b` ;
+- pile complète : `XhciDxe`, `UsbBusDxe`, `UsbMassStorageDxe`, `DiskIoDxe`, `PartitionDxe`, `EnglishDxe`, `Fat` ;
+- vitesse USB/UAS/TRIM et temps alimentation→SSH exact sont mesurés séparément après boot Linux.

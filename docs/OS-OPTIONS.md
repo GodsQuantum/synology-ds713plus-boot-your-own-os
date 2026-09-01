@@ -2,7 +2,7 @@
 
 [← Back to README](../README.md) · [Français](OS-OPTIONS.fr.md)
 
-The F400 firmware patch gives the DS713+ a **normal UEFI USB boot path through the front USB 2.0 port**. The optional DS713Bridge v9.1 additionally provides a verified path to an OS medium behind the rear Etron controller.
+The F400 firmware patch gives the DS713+ a **normal UEFI USB boot path through the front USB 2.0 port**. The recommended DS713Bridge v9.4 additionally provides a physically verified full-stack path to an OS medium behind the rear Etron controller; v9.1 remains the historical minimal-stack Debian reference.
 
 It does not mean every x86-64 operating system is a good fit. The useful question is:
 
@@ -14,13 +14,13 @@ It does not mean every x86-64 operating system is a good fit. The useful questio
 |---|---|---|
 | **Debian 13** | ✅ Verified | Actually booted on the reference DS713+ to userspace + network + SSH |
 | **OpenMediaVault 8** | 🟢 Strong candidate | Debian 13 base, AMD64, low minimum RAM, NAS-focused UI |
-| **Ubuntu Server 26.04 LTS** | 🟢 Plausible | amd64 server image, low enough RAM floor, modern LTS |
+| **Ubuntu Server 26.04 LTS** | ✅ Existing system boot verified | Existing Ubuntu system SSD booted through rear Etron with v9.4 to network/SSH; installer path still separate |
 | **Other lightweight Linux** | 🟡 Case-by-case | Architecture may fit; drivers/installer/kernel still need validation |
 | **Current TrueNAS** | 🔴 Not recommended | 8 GB minimum RAM exceeds the D2700 4 GB maximum |
 
 ## Debian 13 — known-good baseline
 
-Debian 13 amd64 is the only OS this repository has physically validated A-to-Z.
+Debian 13 amd64 remains the fully documented baseline. An existing Ubuntu Server 26.04 system SSD has also now booted through the rear Etron controller with v9.4 to network/SSH; that does not by itself validate the Ubuntu installer path.
 
 Reference test:
 
@@ -76,13 +76,15 @@ Ubuntu 26.04 LTS provides an amd64 server image.
 
 Canonical documents a low-end Server requirement around 1.5 GB RAM depending on installation scenario, so a DS713+ with 2–4 GB RAM is at least within the broad resource range.
 
-What is **not** yet verified here:
+Now physically verified:
 
-- Ubuntu installer boot on this firmware;
-- exact Ethernet/storage driver behavior;
-- power-management behavior on Synology's old ACPI implementation.
+- an existing Ubuntu Server 26.04 system SSD boots through the rear Etron controller with DS713Bridge v9.4;
+- userspace, network and SSH are reached.
 
-Treat it as plausible, not confirmed.
+Still separate/unverified:
+
+- the Ubuntu installer boot path itself;
+- exhaustive power-management validation on Synology's old ACPI implementation.
 
 ## TrueNAS
 
@@ -115,12 +117,19 @@ A distribution may be worth trying if it:
 
 The patch does not alter Linux compatibility. It only removes the firmware's Synology-specific USB VID/PID rejection.
 
+
+### Bridge compatibility history
+
+DS713Bridge v9.1 remains the historical physically validated minimal-stack
+Debian rear-Etron reference. DS713Bridge v9.4 FULL-STACK R2 is the current
+physically validated rear-SSD deployment path.
+
 ## Boot media
 
 Two paths are verified and must be distinguished:
 
 - **front USB 2.0 directly after the F400 unlock**;
-- **rear Etron storage through DS713Bridge v9.1**.
+- **rear Etron storage through DS713Bridge v9.4 FULL-STACK R2**; v9.1 remains the historical minimal-stack Debian reference.
 
 The F400 patch alone does not initialize Etron. The bridge is a separate removable xHCI pre-boot layer and chainloads the rear medium's standard `\EFI\BOOT\BOOTX64.EFI`.
 

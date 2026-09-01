@@ -1,6 +1,14 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 — 2026-09-01
+
+- Added **DS713Bridge v9.4 FULL-STACK R2**, physically validated on a DS713+ with the bridge key on the front USB port and a Linux system SSD on the rear Etron controller.
+- v9.4 deliberately starts a complete modern EDK2 storage path (`XhciDxe`, `UsbBusDxe`, `UsbMassStorageDxe`, `DiskIoDxe`, `PartitionDxe`, `EnglishDxe`, `Fat`) through `EFI_DRIVER_BINDING_PROTOCOL`, avoiding dependency on the 2011 Granite Well upper USB/storage stack.
+- Added the autonomous `scripts/12-create-usb3-bridge-v94.sh`. The exact physically tested script has SHA-256 `6af4b3291f058093a9d2673a51596bb0525b57d5a818587166575f86709f206b`; its embedded v9.4 C source has SHA-256 `75e00a082b11dbb9684eb240f77dbdbe3cfde952b90f7e4f8274020432a0ba39`.
+- The writer builds and validates the complete EFI payload **before** destructive confirmation or `wipefs`, rejects the system disk/non-USB/non-whole-disk/zero-size targets, and preserves the exact validated 202605 `XhciDxe` when recoverable.
+- Kept EDK2 `edk2-stable202605` commit `b03a21a63e3bd001f52c527e5a57feddb53a690b` as the default profile; `edk2-stable202608` commit `2970e5699ba6267f3384ffab20f96647578aebc8` remains an explicit `--latest` experiment.
+- Added v9.4 source/writer static gates while preserving all v9.1 and v9.3 historical tests.
+- DS713Bridge v9.1 remains the historical minimal-stack Debian rear-Etron validation reference; v9.4 is the recommended bridge for broader rear-SSD compatibility.
 
 ## 0.2.0 — 2026-08-27
 

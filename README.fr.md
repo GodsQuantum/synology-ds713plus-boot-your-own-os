@@ -26,7 +26,7 @@ L'idée du projet est donc simple : garder le hardware, enlever le verrou USB sp
 Il y a **deux étapes distinctes**. Ne les mélangez pas :
 
 1. **Déverrouillage firmware (une seule fois, obligatoire) :** tant que le NAS tourne encore sous DSM, utilisez un poste Linux + un compte admin DSM en SSH pour supprimer la restriction `F400:F400`. Le workflow double-dumpe le BIOS, valide le profil exact du DS713+, calcule la patchzone physique, exige une étape d'armement séparée, tente un rollback si la vérification échoue et ne donne l'autorisation de reboot qu'après deux vérifications complètes de la région BIOS.
-2. **Bridge USB3 arrière (optionnel, recommandé si l'OS doit vivre derrière) :** créez une petite clé bridge façade/DOM avec `sudo SDX=sdb ./scripts/10-create-usb3-bridge.sh`. Elle initialise le chemin xHCI validé puis chaîne le `\EFI\BOOT\BOOTX64.EFI` standard du média arrière.
+2. **Bridge USB3 arrière (optionnel, recommandé si l'OS doit vivre derrière) :** créez le bridge full-stack v9.4 physiquement validé avec `./scripts/12-create-usb3-bridge-v94.sh`. Il charge une pile EDK2 xHCI/USB/storage/filesystem moderne puis chaîne le `\EFI\BOOT\BOOTX64.EFI` standard du média arrière. Le writer v9.1 reste disponible pour reproduction historique.
 
 **Chemin le plus simple :** suivez **[Démarrage rapide](docs/QUICKSTART.fr.md)** de haut en bas. Lisez **[Sécurité](docs/SAFETY.fr.md)** avant toute écriture firmware.
 
@@ -36,7 +36,7 @@ DSM encore actif
   -> 07 prepare -> status -> arm -> status
   -> 08 double vérification BIOS -> READY_FOR_REBOOT=YES
   -> reboot/test d'une clé non-F400 normale
-  -> optionnel : 10-create-usb3-bridge.sh pour booter via l'Etron arrière
+  -> optionnel : 12-create-usb3-bridge-v94.sh pour booter via l'Etron arrière
 ```
 
 ---
@@ -51,7 +51,7 @@ DSM encore actif
 | Boot sur clé USB normale | ❌ Firmware limité à `F400:F400` | ✅ Boot non-F400 validé |
 | Debian 13 | Pas un chemin de boot Synology normal | ✅ **Validé A à Z** |
 | OpenMediaVault 8 | Pas proposé par Synology | 🟢 Très bon candidat |
-| Ubuntu Server 26.04 LTS | Pas proposé par Synology | 🟢 Candidat plausible |
+| Ubuntu Server 26.04 LTS | Pas proposé par Synology | ✅ Boot du SSD système Ubuntu existant validé via Etron arrière avec v9.4 ; chemin installateur non validé séparément |
 | TrueNAS actuel | Pas proposé par Synology | 🔴 Mauvaise cible : 8 Go de RAM minimum |
 | Hardware | NAS de 2012 encore fonctionnel | Même machine, mais sous votre contrôle |
 
@@ -97,6 +97,7 @@ Ici, « devrait fonctionner » n'est pas transformé en « fonctionne ».
 | Linux + DHCP/réseau + SSH | ✅ Validé |
 | USB 3.0 arrière Etron avec patch F400 seul | ❌ Non bootable |
 | USB 3.0 arrière via DS713Bridge v9.1 | ✅ Debian 13 → réseau/SSH validé |
+| USB 3.0 arrière via DS713Bridge v9.4 FULL-STACK R2 | ✅ SSD système Ubuntu/Linux → réseau/SSH validé |
 | USB 3.0 arrière après lancement Linux | ✅ Fonctionne via `xhci_hcd` |
 
 Boot de référence :
@@ -132,11 +133,11 @@ Pour un DS713+, surtout avec 2 ou 4 Go de RAM, c'est donc une cible très logiqu
 
 Le repo n'a **pas encore validé son installation A à Z**, donc OMV reste volontairement marqué « candidat », pas « validé ».
 
-### 🟢 Ubuntu Server 26.04 LTS — plausible
+### ✅ Ubuntu Server 26.04 LTS — boot système existant validé
 
 Ubuntu Server 26.04 fournit une image amd64 et peut démarrer autour de 1,5 Go de RAM selon le scénario d'installation.
 
-Le D2700 est Intel 64, donc l'architecture de base correspond. L'installation spécifique sur DS713+ n'a pas encore été validée ici.
+Le D2700 est Intel 64 et un SSD système Ubuntu Server 26.04 existant boote désormais via l'Etron arrière avec DS713Bridge v9.4 jusqu'au réseau/SSH. Le chemin de boot de l'installateur Ubuntu n'a pas été validé séparément.
 
 ### 🔴 TrueNAS actuel — à éviter sur ce hardware
 
@@ -252,6 +253,8 @@ Lire **[Sécurité](docs/SAFETY.fr.md)** et **[Récupération](docs/RECOVERY.fr.
 ---
 
 ## USB 3.0 arrière : ce qui est réellement validé
+
+**Déploiement recommandé actuel : DS713Bridge v9.4 FULL-STACK R2.** Le 1er septembre 2026, une clé v9.4 en USB façade a démarré avec succès le SSD système Ubuntu/Linux existant via le contrôleur Etron arrière jusqu'au réseau/SSH. Contrairement au chemin minimal v9.1, v9.4 charge `XhciDxe`, `UsbBusDxe`, `UsbMassStorageDxe`, `DiskIoDxe`, `PartitionDxe`, `EnglishDxe` et `Fat`, puis les lie via `EFI_DRIVER_BINDING_PROTOCOL`. Voir [le guide v9.4](docs/USB3-BRIDGE-V94.fr.md).
 
 Le **patch firmware F400 seul** n'initialise toujours pas le contrôleur xHCI Etron EJ168A arrière. Les deux ports avaient donné un résultat négatif lors des cold boots de l'expérience v0.1.0.
 

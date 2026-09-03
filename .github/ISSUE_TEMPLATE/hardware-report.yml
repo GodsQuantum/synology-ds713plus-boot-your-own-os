@@ -60,3 +60,26 @@ body:
     attributes:
       label: Boot evidence
       description: Port/controller, VID:PID, UEFI/legacy mode, OS, DHCP/SSH/console result. Do not attach proprietary firmware.
+
+
+  - type: input
+    id: bridge_version
+    attributes:
+      label: DS713Bridge version / creator
+      placeholder: v9.5 / scripts/13-create-usb3-bridge-v95.sh
+
+  - type: dropdown
+    id: bridge_location
+    attributes:
+      label: Bridge physical location
+      options:
+        - Front USB
+        - Rear USB
+        - Internal J2/DOM
+        - Not applicable
+
+  - type: textarea
+    id: sata_dom
+    attributes:
+      label: SATA power / J2-DOM evidence
+      description: State whether SATA powered before Linux, whether J2 booted, and whether the same media was retested in the known-good front port.

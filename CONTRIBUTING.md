@@ -10,3 +10,7 @@ Hardware reports and patches are welcome.
 
 - Bridge changes should preserve the distinction between **F400-only rear negative results** and **rear-controller boot through DS713Bridge v9.1**. Do not infer that both physical rear connectors were independently validated unless you have that evidence.
 - Run the repository consistency and Markdown-link tests through `make lint` before opening a PR.
+
+## v9.5 / SATA / J2 evidence
+
+Reports should include bridge version, physical placement, SATA-power result, serial UEFI evidence when available, and whether the exact same media was retested in the known-good front USB position. Negative J2 results are useful evidence; do not label J2 supported until a real boot succeeds.

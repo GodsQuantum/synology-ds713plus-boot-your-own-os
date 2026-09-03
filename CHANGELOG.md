@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0 — 2026-09-03
+
+- Promoted physically validated **DS713Bridge v9.5 SATA-POWER**.
+- Verified front-v9.5 -> rear-Etron Linux boot with pre-OS SATA power GPIO16 -> 200 ms -> GPIO20.
+- Integrated the real standalone v9.5 source/tests/writer.
+- Added beginner-friendly USB selection with stable `/dev/disk/by-id/usb-*` identity.
+- Fixed v9.4 host-side target handling so stable identities are revalidated immediately before destructive writes.
+- Recorded negative v9.4/v9.5 J2/DOM tests without claiming an unproven cause.
+- Added beginner quick starts plus research status/handoff documentation.
+
+
 ## 0.3.0 — 2026-09-01
 
 - Added **DS713Bridge v9.4 FULL-STACK R2**, physically validated on a DS713+ with the bridge key on the front USB port and a Linux system SSD on the rear Etron controller.

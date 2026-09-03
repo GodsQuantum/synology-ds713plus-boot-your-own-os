@@ -1,5 +1,16 @@
 # Bridge de boot USB 3.0 arrière — DS713Bridge v9.4
 
+## Recommandation v9.5 actuelle
+
+Pour un nouveau déploiement :
+
+```bash
+./scripts/13-create-usb3-bridge-v95.sh
+```
+
+v9.5 conserve la pile FULL-STACK R2 de v9.4 et ajoute l'alimentation SATA pré-OS GPIO16 -> 200 ms -> GPIO20. Le creator public sélectionne la clé par numéro et utilise une identité `/dev/disk/by-id` stable.
+
+
 [← Retour au README](../README.fr.md) · [English](USB3-BRIDGE.md) · [Détails v9.4](USB3-BRIDGE-V94.fr.md)
 
 ## Bridge recommandé

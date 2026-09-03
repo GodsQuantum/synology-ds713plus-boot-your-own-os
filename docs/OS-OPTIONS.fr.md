@@ -138,3 +138,7 @@ Le boot SATA arbitraire et le remplacement arbitraire du DOM restent des sujets 
 ## Sources
 
 Voir [SOURCES.md](SOURCES.md) pour les références officielles OMV, Ubuntu, TrueNAS, Intel et Synology.
+
+## Mise à jour déploiement DS713Bridge v9.5
+
+Le bridge actuellement recommandé est v9.5 SATA-POWER : le SSD système Linux existant boote via l'Etron arrière et les baies SATA internes sont alimentées avant Linux.

@@ -66,3 +66,17 @@ See [REFERENCE-RESULTS.md](REFERENCE-RESULTS.md) and [VERIFIED-HARDWARE.md](VERI
 - [OpenCore install guide — XhciDxe](https://dortania.github.io/OpenCore-Install-Guide/installer-guide/opencore-efi.html) — useful prior art for old firmware lacking xHCI support.
 
 The repository's bridge timings and success/failure outcomes are project measurements, not claims made by those upstream sources.
+
+## DS713+ SATA-power evidence
+
+Project-derived evidence from Synology Cedarview GPL source plus physical DS713+ tests:
+
+```text
+CONFIG_SYNO_CEDARVIEW=y
+CONFIG_SYNO_ICH_GPIO_CTRL=y
+CONFIG_SYNO_ATA_PWR_CTRL=y
+HddEnPinMap[] = {16, 20, 21, 32}
+HW_DS713p handled by SYNO_CTRL_HDD_POWERON
+```
+
+See `USB3-BRIDGE-V95.md` and `RESEARCH-HANDOFF.md`.

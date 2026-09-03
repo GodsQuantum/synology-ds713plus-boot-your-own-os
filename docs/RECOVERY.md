@@ -9,3 +9,13 @@ Hardware recovery with an external SPI programmer remains the universal last res
 ## Bridge-key recovery
 
 The bridge is removable and does not alter the rear OS medium. If a bridge experiment fails, recreate the last known-good v9.1 key on another Linux machine with `scripts/10-create-usb3-bridge.sh`. When the exact validated v9.1/Xhci files are already present on the selected key, the writer preserves them before repartitioning and reuses them byte-for-byte.
+
+## Current bridge key
+
+Recreate the current bridge with:
+
+```bash
+./scripts/13-create-usb3-bridge-v95.sh
+```
+
+v9.4 and v9.1 remain historical/research baselines.

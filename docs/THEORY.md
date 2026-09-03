@@ -13,3 +13,7 @@ The F400 patch and the rear bridge solve different layers. F400 changes `UsbBusD
 DS713Bridge v9.1 therefore runs before the rear OS loader, starts the validated `XhciDxe`, filters newly visible filesystems by device-path ancestry below Etron, and chainloads only `\EFI\BOOT\BOOTX64.EFI`. The deployment bridge deliberately avoids replacing the whole storage stack; a later full-stack experiment was slower.
 
 Long-term research aims to dispatch xHCI natively during DXE before BDS, so the firmware itself can enumerate rear storage without a removable bridge.
+
+## v9.5: separate SATA-power layer
+
+Keep these layers separate: the F400 firmware bypass, the v9.4 rear-Etron full stack, the v9.5 SATA-power step, and the still-unresolved J2/DOM path.

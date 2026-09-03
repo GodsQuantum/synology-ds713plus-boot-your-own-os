@@ -82,3 +82,15 @@ Une pile stockage EDK2 moderne complète a booté mais régressé à ~199 s jusq
 - profil EDK2 par défaut : `edk2-stable202605` / `b03a21a63e3bd001f52c527e5a57feddb53a690b` ;
 - pile complète : `XhciDxe`, `UsbBusDxe`, `UsbMassStorageDxe`, `DiskIoDxe`, `PartitionDxe`, `EnglishDxe`, `Fat` ;
 - vitesse USB/UAS/TRIM et temps alimentation→SSH exact sont mesurés séparément après boot Linux.
+
+## DS713Bridge v9.5 SATA-POWER — validation physique
+
+```text
+bridge façade     v9.5
+Etron arrière     SSD système Linux existant
+SATA power        GPIO16 -> 200 ms -> GPIO20
+boot              Linux / réseau / SSH
+BOOTX64 SHA-256   eae1c93e208495fe81b279b1663a1747367548a7735076e25fa9266097515fa6
+```
+
+Les essais J2/DOM internes avec v9.4 et v9.5 n'ont pas booté.

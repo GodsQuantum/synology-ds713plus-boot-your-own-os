@@ -9,7 +9,8 @@
 [Choose an OS](docs/OS-OPTIONS.md) ·
 [RAM upgrade](docs/RAM-UPGRADE.md) ·
 [Verified hardware](docs/VERIFIED-HARDWARE.md) ·
-[Safety](docs/SAFETY.md)
+[Safety](docs/SAFETY.md) ·
+[Research status](docs/RESEARCH-STATUS.md)
 
 > **Give an EOL Synology DS713+ a second life.** Remove Synology's `F400:F400` USB boot restriction and boot a compatible modern x86-64 Linux/NAS OS from a normal USB drive.
 
@@ -26,7 +27,7 @@ This project takes a different route: keep the hardware, remove the firmware's S
 There are **two separate stages**. Do not mix them:
 
 1. **Firmware unlock (required once):** while the NAS still runs DSM, use a Linux workstation + DSM admin SSH to remove the `F400:F400` restriction. The scripts double-dump, validate the exact DS713+ profile, calculate the physical patch zone, require a separate arm step, attempt rollback on verification failure, and refuse reboot clearance until the whole BIOS region verifies twice.
-2. **Rear USB3 bridge (optional, but recommended if the OS lives on a rear port):** create the physically validated v9.4 full-stack bridge with `./scripts/12-create-usb3-bridge-v94.sh`. It loads a modern EDK2 xHCI/USB/storage/filesystem stack and chainloads the rear medium's standard `\EFI\BOOT\BOOTX64.EFI`. The v9.1 writer remains available for historical reproduction.
+2. **Rear USB3 bridge (optional, but recommended if the OS lives on a rear port):** create the physically validated v9.5 SATA-POWER bridge with `./scripts/13-create-usb3-bridge-v95.sh`. It loads a modern EDK2 xHCI/USB/storage/filesystem stack and chainloads the rear medium's standard `\EFI\BOOT\BOOTX64.EFI`. The v9.1 writer remains available for historical reproduction.
 
 **Fastest route:** follow **[Quick start](docs/QUICKSTART.md)** from top to bottom. Read **[Safety](docs/SAFETY.md)** before the firmware write.
 
@@ -36,7 +37,7 @@ DSM still running
   -> 07 prepare -> status -> arm -> status
   -> 08 full BIOS verify -> READY_FOR_REBOOT=YES
   -> reboot/test normal non-F400 USB
-  -> optional 12-create-usb3-bridge-v94.sh for rear Etron boot
+  -> optional 13-create-usb3-bridge-v95.sh for rear Etron boot + SATA power
 ```
 
 ---
@@ -51,7 +52,7 @@ DSM still running
 | Normal USB boot | ❌ Firmware expects `F400:F400` | ✅ Normal non-F400 USB boot verified |
 | Debian 13 | Not a normal supported boot path | ✅ **Verified A-to-Z** |
 | OpenMediaVault 8 | Not a Synology-supported option | 🟢 Strong candidate |
-| Ubuntu Server 26.04 LTS | Not a Synology-supported option | ✅ Existing Ubuntu system SSD boot verified via rear Etron with v9.4; installer path not separately validated |
+| Ubuntu Server 26.04 LTS | Not a Synology-supported option | ✅ Existing Linux system SSD boot verified via rear Etron with v9.5; installer path not separately validated |
 | Current TrueNAS | Not a Synology-supported option | 🔴 Not a sensible target: 8 GB minimum RAM |
 | Hardware | Same 2012 NAS | Same hardware, under your control |
 
@@ -98,6 +99,7 @@ This repo does not mark “should work” as “works”.
 | Rear Etron USB 3.0 with F400 patch only | ❌ Not bootable |
 | Rear Etron USB 3.0 through DS713Bridge v9.1 | ✅ Debian 13 → network/SSH verified |
 | Rear Etron USB 3.0 through DS713Bridge v9.4 FULL-STACK R2 | ✅ Ubuntu/Linux system SSD → network/SSH verified |
+| Rear Etron USB 3.0 through DS713Bridge v9.5 SATA-POWER | ✅ Linux system SSD → network/SSH + pre-OS SATA power verified |
 | Rear USB 3.0 once Linux is running | ✅ Works via `xhci_hcd` |
 
 Reference boot:
@@ -137,7 +139,7 @@ It has **not yet been installed A-to-Z by this repository**, so it is deliberate
 
 Ubuntu Server 26.04 has an amd64 installer and can start around 1.5 GB RAM depending on installation/use case.
 
-The D2700 is Intel 64, and an existing Ubuntu Server 26.04 system SSD has now booted through the rear Etron controller using DS713Bridge v9.4 to network/SSH. The Ubuntu installer path itself has not been separately validated.
+The D2700 is Intel 64, and an existing Linux system SSD has now booted through the rear Etron controller using DS713Bridge v9.5 to network/SSH. The Ubuntu installer path itself has not been separately validated.
 
 ### 🔴 Current TrueNAS — skip it on this machine
 

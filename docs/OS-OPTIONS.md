@@ -138,3 +138,7 @@ Arbitrary SATA boot and arbitrary internal-DOM replacement remain separate quest
 ## Sources
 
 See [SOURCES.md](SOURCES.md) for official OMV, Ubuntu, TrueNAS, Intel and Synology references.
+
+## DS713Bridge v9.5 deployment update
+
+The currently recommended bridge is v9.5 SATA-POWER: the existing Linux system SSD boots through rear Etron and the internal SATA bays are powered before Linux.

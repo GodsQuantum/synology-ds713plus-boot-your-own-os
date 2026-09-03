@@ -82,3 +82,15 @@ An experimental full modern EDK2 storage stack booted but regressed to ~199 s po
 - default EDK2 profile: `edk2-stable202605` / `b03a21a63e3bd001f52c527e5a57feddb53a690b`;
 - full stack: `XhciDxe`, `UsbBusDxe`, `UsbMassStorageDxe`, `DiskIoDxe`, `PartitionDxe`, `EnglishDxe`, `Fat`;
 - negotiated USB speed/UAS/TRIM and exact power-to-SSH timing are measured separately after Linux boot.
+
+## DS713Bridge v9.5 SATA-POWER — physical validation
+
+```text
+front bridge      v9.5
+rear Etron        existing Linux system SSD
+SATA power        GPIO16 -> 200 ms -> GPIO20
+boot              Linux / network / SSH
+BOOTX64 SHA-256   eae1c93e208495fe81b279b1663a1747367548a7735076e25fa9266097515fa6
+```
+
+Internal J2/DOM tests with v9.4 and v9.5 did not boot.

@@ -44,3 +44,13 @@ DS713Bridge v9.4 source  75e00a082b11dbb9684eb240f77dbdbe3cfde952b90f7e4f8274020
 ```
 
 The bridge hashes above identify reproducible software artifacts; hardware compatibility still comes from the safety probes and actual boot evidence.
+
+## v9.5 / SATA / J2 update
+
+| Path | Status |
+|---|---|
+| Rear Etron through DS713Bridge v9.5 | ✅ VERIFIED |
+| SATA bay 1 pre-OS GPIO16 | ✅ VERIFIED |
+| SATA bay 2 pre-OS GPIO20 | ✅ VERIFIED |
+| Internal J2/DOM with v9.4 | ❌ NEGATIVE TEST |
+| Internal J2/DOM with v9.5 | ❌ NEGATIVE TEST |

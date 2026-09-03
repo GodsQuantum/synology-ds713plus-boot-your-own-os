@@ -112,3 +112,7 @@ Après `ExitBootServices()`, le contrôleur xHCI et le stockage appartiennent à
 ## Référence historique
 
 v9.1 reste la référence minimal-stack ayant démarré physiquement Debian 13 derrière l'Etron jusqu'au réseau/SSH. v9.4 est la solution full-stack plus récente validée pour le cas SSD arrière.
+
+## Maintenance de sécurité du writer
+
+Le hash historique documente le writer v9.4 utilisé pour la validation matérielle initiale. Le script public peut recevoir des corrections **host-side** qui ne modifient pas le payload UEFI v9.4 ; en v0.4.0, il conserve les cibles `/dev/disk/by-id` et les revalide juste avant l'effacement.

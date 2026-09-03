@@ -13,3 +13,7 @@ Le patch F400 et le bridge arrière corrigent deux couches différentes. F400 ch
 DS713Bridge v9.1 s'exécute donc avant le loader OS arrière, démarre le `XhciDxe` validé, filtre les nouveaux filesystems par ascendance device-path sous Etron et chaîne uniquement `\EFI\BOOT\BOOTX64.EFI`. Le bridge de déploiement évite volontairement de remplacer toute la pile stockage ; une expérience full-stack ultérieure était plus lente.
 
 La recherche long terme vise un dispatch xHCI natif pendant DXE avant BDS afin que le firmware lui-même puisse énumérer l'arrière sans bridge amovible.
+
+## v9.5 : couche SATA-power séparée
+
+Il faut distinguer le bypass firmware F400, la pile Etron arrière v9.4, l'alimentation SATA v9.5 et le chemin J2/DOM toujours non résolu.

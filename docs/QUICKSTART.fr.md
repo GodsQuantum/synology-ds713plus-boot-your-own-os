@@ -1,25 +1,21 @@
-# Démarrage rapide DS713+ — déverrouillage F400 + bridge USB3 arrière
+# DS713+ — démarrage rapide
 
-[← README](../README.fr.md) · [English](QUICKSTART.md) · [Sécurité](SAFETY.fr.md)
+Ce document donne le chemin pratique. Les détails de reverse engineering sont dans `RESEARCH-HANDOFF.md`.
 
-C'est le chemin supporté le plus court pour le **profil DS713+ validé**. Un flash firmware peut briquer le matériel. Ne sautez aucun garde-fou.
+## A. Télécharger le projet
 
-## Phase A — autoriser les périphériques USB ordinaires dans le firmware
-
-### Prérequis
-
-- un **Synology DS713+** qui démarre encore DSM ;
-- un poste Linux avec `git`, `ssh`, `python3`, `bash` et Docker ou Podman ;
-- un compte administrateur DSM capable d'exécuter `sudo` ;
-- une alimentation stable ; onduleur fortement recommandé ;
-- ce dépôt cloné sur le poste Linux.
-
-Les scripts firmware ciblent volontairement **DSM tant que DSM fonctionne encore**. N'exécutez pas les étapes 00–08 contre l'installation Debian/OMV installée ensuite.
+Sur un PC Linux :
 
 ```bash
 git clone https://github.com/GodsQuantum/synology-ds713plus-boot-your-own-os.git
 cd synology-ds713plus-boot-your-own-os
+```
 
+## B. Déverrouiller le firmware du DS713+ une seule fois
+
+Prérequis : DSM encore bootable, compte admin SSH, PC Linux avec Docker ou Podman, alimentation stable.
+
+```bash
 export NAS_HOST='192.168.1.x'
 export NAS_USER='votre-admin-dsm'
 
@@ -32,69 +28,62 @@ export NAS_USER='votre-admin-dsm'
 ./scripts/06-preflight.sh
 ```
 
-Arrêtez-vous au premier échec. `02-probe.sh` doit valider `PROBE_SAFE_PROFILE=YES` et `06-preflight.sh` doit réussir complètement.
+Arrêtez-vous au premier échec.
 
-### Écriture SPI réelle
-
-L'écriture est volontairement séparée de la préparation :
+La vraie écriture SPI reste volontairement séparée :
 
 ```bash
 ./scripts/07-flash.sh prepare
 ./scripts/07-flash.sh status
 
-# Continuer uniquement si le statut vaut exactement STATUS=WAITING_FOR_ARM
+# uniquement si STATUS=WAITING_FOR_ARM :
 ./scripts/07-flash.sh arm
-
-# Répéter jusqu'à obtenir un FINAL_STATUS
 ./scripts/07-flash.sh status
 
-# Obligatoire avant reboot
+# obligatoire avant reboot :
 ./scripts/08-postflash-verify.sh
 ```
 
-Ne **redémarrez pas** tant que la dernière commande n'affiche pas :
+Ne redémarrez que si `READY_FOR_REBOOT=YES`.
 
-```text
-READY_FOR_REBOOT=YES
-```
+## C. Créer la clé DS713Bridge v9.5
 
-Si le statut devient `FINAL_STATUS=CRITICAL_DO_NOT_REBOOT`, laissez le NAS allumé et consultez [Récupération](RECOVERY.fr.md).
-
-## Phase B — créer la clé bridge USB3 arrière
-
-Le patch F400 permet au firmware d'accepter une clé ordinaire en façade. Il ne sait pas, à lui seul, initialiser le contrôleur xHCI Etron EJ168A arrière.
-
-Pour placer le média OS derrière, créez une deuxième petite clé bridge depuis un poste Linux :
+Depuis le dossier du projet :
 
 ```bash
-lsblk -o NAME,PATH,TRAN,SIZE,FSTYPE,LABEL,MODEL,SERIAL,MOUNTPOINTS
-
-# Exemple uniquement : remplacez sdb par la clé USB que vous acceptez d'EFFACER.
-sudo SDX=sdb ./scripts/12-create-usb3-bridge-v94.sh
+./scripts/13-create-usb3-bridge-v95.sh
 ```
 
-Le writer refuse le disque système, les cibles non USB et les cibles qui ne sont pas un disque entier, puis exige une confirmation destructive exacte.
+Le script :
 
-### Disposition physique
+1. liste uniquement les disques USB entiers utilisables ;
+2. affiche taille, modèle, numéro de série et identité stable ;
+3. demande simplement le numéro de la clé ;
+4. conserve la cible via `/dev/disk/by-id/usb-*` ;
+5. compile et vérifie avant l'effacement ;
+6. demande une confirmation destructive explicite ;
+7. écrit puis vérifie la clé.
+
+## D. Brancher
 
 ```text
-USB 2.0 façade : clé DS713Bridge v9.1
-Etron arrière  : média contenant votre OS
+USB façade     : clé DS713Bridge v9.5
+USB arrière    : SSD / clé contenant l'OS
+baies SATA     : alimentées automatiquement par v9.5 avant Linux
 ```
 
-Le média arrière doit booter en UEFI x86-64 et exposer le chemin amovible standard :
+Le média OS arrière doit fournir :
 
 ```text
 \EFI\BOOT\BOOTX64.EFI
 ```
 
-Le bridge est agnostique du bootloader : GRUB, systemd-boot, Limine, rEFInd et les autres loaders UEFI standards peuvent fonctionner derrière lui.
+## E. État réel
 
-## Ce qui est validé
+- bypass firmware `F400:F400` : validé ;
+- boot USB normal en façade : validé ;
+- boot du SSD Linux via Etron arrière avec v9.5 : validé ;
+- alimentation SATA GPIO16 -> 200 ms -> GPIO20 avant Linux : validée ;
+- J2/DOM interne : testé avec v9.4/v9.5, non résolu.
 
-- déverrouillage F400 : Debian 13 non-F400 en façade jusqu'au réseau/SSH ;
-- arrière avec patch F400 seul : résultat négatif sur les deux ports ;
-- DS713Bridge v9.1 : Debian 13 via contrôleur Etron arrière jusqu'au réseau/SSH ;
-- code du bridge : aucun UUID OS, serial disque, numéro de port arrière, `BootOrder` ou `BootNext` codé en dur.
-
-Voir [Matériel validé](VERIFIED-HARDWARE.fr.md) et [Bridge USB3 arrière](USB3-BRIDGE.fr.md) pour les preuves et hashes exacts.
+Pour poursuivre la recherche : `docs/RESEARCH-HANDOFF.md`.

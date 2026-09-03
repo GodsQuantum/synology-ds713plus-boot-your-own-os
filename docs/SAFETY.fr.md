@@ -16,3 +16,7 @@ Si `FINAL_STATUS=CRITICAL_DO_NOT_REBOOT`, ne coupez pas le NAS et récupérez le
 `scripts/10-create-usb3-bridge.sh` efface entièrement le disque USB sélectionné. Il n'accepte qu'un disque USB entier `/dev/sdX`, refuse le disque système courant et les cibles non USB, affiche modèle/serial puis exige une confirmation destructive exacte sauf automatisation explicite avec `YES=1`.
 
 Pour un build bridge neuf, le script distingue l'identité binaire brute exacte des rebuilds équivalents par source/normalisation. Ne présentez pas un rebuild frais comme le PE physiquement testé exact si son SHA-256 ne correspond pas à la référence connue.
+
+## v9.5 : identité USB stable
+
+Une vraie réénumération USB a changé un nom `/dev/sdX` pendant le développement. v9.5 sélectionne donc un disque USB entier, dérive `/dev/disk/by-id/usb-*`, puis le writer v9.4 résout/revalide cette identité juste avant les écritures destructives.

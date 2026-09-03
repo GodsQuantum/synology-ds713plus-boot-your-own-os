@@ -13,8 +13,8 @@ profile = read('profiles/ds713plus.env')
 need('BIOS_START=0x011000' in profile and 'BIOS_END=0x210fff' in profile, 'profile BIOS bounds changed')
 need('ERASE_BLOCK_BYTES=4096' in profile, 'profile erase size changed')
 
-need(read('VERSION').strip() == '0.3.0', 'VERSION must be 0.3.0')
-need('version: 0.3.0' in read('CITATION.cff'), 'CITATION version mismatch')
+need(read('VERSION').strip() == '0.4.0', 'VERSION must be 0.4.0')
+need('version: 0.4.0' in read('CITATION.cff'), 'CITATION version mismatch')
 
 required = [
     'README.md','README.fr.md','docs/QUICKSTART.md','docs/QUICKSTART.fr.md',
@@ -68,3 +68,34 @@ v94_writer=read('scripts/12-create-usb3-bridge-v94.sh')
 need('DS713Bridge v9.4 FULL-STACK R2' in v94, 'v9.4 source identity missing')
 need('DS713Bridge v9.4 FULL-STACK R2' in v94_writer, 'v9.4 writer identity missing')
 need('6af4b3291f058093a9d2673a51596bb0525b57d5a818587166575f86709f206b' in read('docs/USB3-BRIDGE-V94.md'), 'v9.4 writer hash missing from docs')
+
+
+# v9.5 release gates
+for pth in [
+    'bridge/DS713Bridge-v9.5.c',
+    'bridge/test_v95_static.py',
+    'scripts/13-create-usb3-bridge-v95.sh',
+    'tests/test_v95_writer.py',
+    'tests/test_v94_stable_target.py',
+    'docs/USB3-BRIDGE-V95.md',
+    'docs/USB3-BRIDGE-V95.fr.md',
+    'docs/DOM-USB-RESEARCH.fr.md',
+    'docs/RESEARCH-STATUS.md',
+    'docs/RESEARCH-STATUS.fr.md',
+    'docs/RESEARCH-HANDOFF.md',
+]:
+    need((root / pth).is_file(), f'missing v9.5 release file: {pth}')
+
+need('DS713Bridge v9.5' in read('bridge/DS713Bridge-v9.5.c'), 'v9.5 source identity missing')
+need('/dev/disk/by-id' in read('scripts/13-create-usb3-bridge-v95.sh'), 'v9.5 stable target handling missing')
+need('choose_stable_target' in read('scripts/13-create-usb3-bridge-v95.sh'), 'v9.5 beginner selector missing')
+need('GPIO16' in read('docs/USB3-BRIDGE-V95.md'), 'v9.5 GPIO16 documentation missing')
+need('GPIO20' in read('docs/USB3-BRIDGE-V95.md'), 'v9.5 GPIO20 documentation missing')
+need('J2' in read('docs/RESEARCH-STATUS.md'), 'J2 status missing')
+
+# documentation shell-expansion regression gates
+handoff = read('docs/RESEARCH-HANDOFF.md')
+need('`/dev/sdX` assignment' in handoff, 'RESEARCH-HANDOFF lost /dev/sdX literal')
+need('patched `UsbBusDxe`?' in handoff, 'RESEARCH-HANDOFF lost UsbBusDxe literal')
+need('changed a  assignment' not in handoff, 'RESEARCH-HANDOFF contains shell-expansion corruption')
+need('separately from patched ?' not in handoff, 'RESEARCH-HANDOFF contains shell-expansion corruption')

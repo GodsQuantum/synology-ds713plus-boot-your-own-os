@@ -158,8 +158,8 @@ root_disk(){
   readlink -f "$disk"
 }
 choose_target(){
-  local root="$1" disk size type tran i choice
-  if [[ -n "$TARGET" ]]; then TARGET="$(readlink -f "$TARGET")"
+  local root="$1" disk size type tran i choice target_real
+  if [[ -n "$TARGET" ]]; then : # preserve stable /dev/disk/by-id target
   else
     mapfile -t USB_DISKS < <(lsblk -dpno PATH,TRAN,TYPE | awk '$2=="usb" && $3=="disk"{print $1}')
     FILTERED=()
@@ -175,10 +175,11 @@ choose_target(){
     if [[ "$choice" =~ ^[0-9]+$ ]]; then (( choice>=1 && choice<=${#FILTERED[@]} )) || fail "choix invalide"; TARGET="${FILTERED[$((choice-1))]}"
     else TARGET="$(readlink -f "$choice")"; fi
   fi
-  [[ -b "$TARGET" ]] || fail "cible inexistante: $TARGET"
+  target_real="$(readlink -f "$TARGET" 2>/dev/null || true)"; [[ -n "$target_real" && -b "$target_real" ]] || fail "cible inexistante: $TARGET"
   type="$(lsblk -dn -o TYPE "$TARGET" | xargs)"; [[ "$type" == disk ]] || fail "cible non-disque entier"
   tran="$(lsblk -dn -o TRAN "$TARGET" | xargs)"; [[ "$tran" == usb ]] || fail "cible non USB: $tran"
   [[ "$TARGET" != "$root" ]] || fail "REFUS: cible = disque système"
+[[ "$target_real" != "$root" ]] || fail "REFUS: cible résolue = disque système"
   size="$(lsblk -bdn -o SIZE "$TARGET" | xargs)"; [[ "$size" =~ ^[0-9]+$ ]] && (( size>0 )) || fail "taille cible invalide"
 }
 ROOTDISK="$(root_disk)"; choose_target "$ROOTDISK"
@@ -303,7 +304,7 @@ if [[ "$PROFILE" == 202605 ]]; then
   if [[ -n "$RECOVERED_XHCI" ]]; then cp "$RECOVERED_XHCI" "$OUT/drivers/XhciDxe.efi"; XHCI_PROVENANCE="EXACT_VALIDATED_RECOVERED"; else XHCI_PROVENANCE="REBUILT_NORMALIZED_EQUIVALENT"; fi
 else XHCI_PROVENANCE="PINNED_202608_EXPERIMENTAL"; fi
 for f in "$OUT/BOOTX64.EFI" "$OUT"/drivers/*.efi; do file "$f" | grep -q 'PE32+ executable for EFI' || fail "PE EFI invalide: $f"; done
-BACKUP="$STATE/prewrite-$(date +%Y%m%d-%H%M%S)"; mkdir -p "$BACKUP"; sfdisk -d "$TARGET" > "$BACKUP/sfdisk.txt" 2>/dev/null || true; lsblk -f "$TARGET" > "$BACKUP/lsblk.txt" || true
+TARGET_NOW="$(readlink -f "$TARGET" 2>/dev/null || true)"; [[ -n "$TARGET_NOW" && -b "$TARGET_NOW" ]] || fail "stable target unavailable before write: $TARGET"; TARGET_NOW_SIZE="$(lsblk -bdn -o SIZE "$TARGET" | xargs)"; [[ "$TARGET_NOW_SIZE" =~ ^[0-9]+$ ]] && (( TARGET_NOW_SIZE > 0 )) || fail "stable target has zero/invalid size before write: $TARGET"; TARGET_NOW_TYPE="$(lsblk -dn -o TYPE "$TARGET" | xargs)"; [[ "$TARGET_NOW_TYPE" == disk ]] || fail "stable target is no longer a whole disk: $TARGET_NOW_TYPE"; TARGET_NOW_TRAN="$(lsblk -dn -o TRAN "$TARGET" | xargs)"; [[ "$TARGET_NOW_TRAN" == usb ]] || fail "stable target is no longer USB: $TARGET_NOW_TRAN"; [[ "$TARGET_NOW" != "$ROOTDISK" ]] || fail "REFUS: stable target became system disk"; echo "TARGET_STABLE_ID=$TARGET"; echo "TARGET_RESOLVED_NOW=$TARGET_NOW"; BACKUP="$STATE/prewrite-$(date +%Y%m%d-%H%M%S)"; mkdir -p "$BACKUP"; sfdisk -d "$TARGET" > "$BACKUP/sfdisk.txt" 2>/dev/null || true; lsblk -f "$TARGET" > "$BACKUP/lsblk.txt" || true
 echo
 echo "===== BUILD COMPLET VALIDÉ — PHASE DESTRUCTIVE ====="
 ls -lh "$OUT/BOOTX64.EFI" "$OUT"/drivers/*.efi

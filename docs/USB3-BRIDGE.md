@@ -1,5 +1,16 @@
 # Rear USB 3.0 boot bridge — DS713Bridge v9.4
 
+## Current v9.5 recommendation
+
+For a new deployment:
+
+```bash
+./scripts/13-create-usb3-bridge-v95.sh
+```
+
+v9.5 preserves the v9.4 FULL-STACK R2 payload and adds pre-OS SATA power GPIO16 -> 200 ms -> GPIO20. The public creator selects the key by number and uses a stable `/dev/disk/by-id` identity.
+
+
 [← Back to README](../README.md) · [Français](USB3-BRIDGE.fr.md) · [v9.4 details](USB3-BRIDGE-V94.md)
 
 ## Recommended bridge

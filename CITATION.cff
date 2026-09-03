@@ -4,8 +4,8 @@ title: "Synology DS713+ — Boot Your OS of Choice"
 type: software
 authors:
   - name: "Project contributors"
-version: 0.3.0
-date-released: 2026-09-01
+version: 0.4.0
+date-released: 2026-09-03
 license: MIT
 repository-code: "https://github.com/GodsQuantum/synology-ds713plus-boot-your-own-os"
 url: "https://github.com/GodsQuantum/synology-ds713plus-boot-your-own-os"

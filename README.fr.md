@@ -9,7 +9,8 @@
 [Choisir un OS](docs/OS-OPTIONS.fr.md) ·
 [Upgrade RAM](docs/RAM-UPGRADE.fr.md) ·
 [Matériel validé](docs/VERIFIED-HARDWARE.fr.md) ·
-[Sécurité](docs/SAFETY.fr.md)
+[Sécurité](docs/SAFETY.fr.md) ·
+[État de la recherche](docs/RESEARCH-STATUS.fr.md)
 
 > **Redonnez une vraie vie à un Synology DS713+ en fin de support.** Supprimez la restriction USB `F400:F400` de Synology et bootez un OS Linux/NAS x86-64 compatible depuis une clé USB normale.
 
@@ -26,7 +27,7 @@ L'idée du projet est donc simple : garder le hardware, enlever le verrou USB sp
 Il y a **deux étapes distinctes**. Ne les mélangez pas :
 
 1. **Déverrouillage firmware (une seule fois, obligatoire) :** tant que le NAS tourne encore sous DSM, utilisez un poste Linux + un compte admin DSM en SSH pour supprimer la restriction `F400:F400`. Le workflow double-dumpe le BIOS, valide le profil exact du DS713+, calcule la patchzone physique, exige une étape d'armement séparée, tente un rollback si la vérification échoue et ne donne l'autorisation de reboot qu'après deux vérifications complètes de la région BIOS.
-2. **Bridge USB3 arrière (optionnel, recommandé si l'OS doit vivre derrière) :** créez le bridge full-stack v9.4 physiquement validé avec `./scripts/12-create-usb3-bridge-v94.sh`. Il charge une pile EDK2 xHCI/USB/storage/filesystem moderne puis chaîne le `\EFI\BOOT\BOOTX64.EFI` standard du média arrière. Le writer v9.1 reste disponible pour reproduction historique.
+2. **Bridge USB3 arrière (optionnel, recommandé si l'OS doit vivre derrière) :** créez le bridge v9.5 SATA-POWER physiquement validé avec `./scripts/13-create-usb3-bridge-v95.sh`. Il charge une pile EDK2 xHCI/USB/storage/filesystem moderne puis chaîne le `\EFI\BOOT\BOOTX64.EFI` standard du média arrière. Le writer v9.1 reste disponible pour reproduction historique.
 
 **Chemin le plus simple :** suivez **[Démarrage rapide](docs/QUICKSTART.fr.md)** de haut en bas. Lisez **[Sécurité](docs/SAFETY.fr.md)** avant toute écriture firmware.
 
@@ -36,7 +37,7 @@ DSM encore actif
   -> 07 prepare -> status -> arm -> status
   -> 08 double vérification BIOS -> READY_FOR_REBOOT=YES
   -> reboot/test d'une clé non-F400 normale
-  -> optionnel : 12-create-usb3-bridge-v94.sh pour booter via l'Etron arrière
+  -> optionnel : 13-create-usb3-bridge-v95.sh pour booter via l'Etron arrière + alimenter les SATA
 ```
 
 ---
@@ -51,7 +52,7 @@ DSM encore actif
 | Boot sur clé USB normale | ❌ Firmware limité à `F400:F400` | ✅ Boot non-F400 validé |
 | Debian 13 | Pas un chemin de boot Synology normal | ✅ **Validé A à Z** |
 | OpenMediaVault 8 | Pas proposé par Synology | 🟢 Très bon candidat |
-| Ubuntu Server 26.04 LTS | Pas proposé par Synology | ✅ Boot du SSD système Ubuntu existant validé via Etron arrière avec v9.4 ; chemin installateur non validé séparément |
+| Ubuntu Server 26.04 LTS | Pas proposé par Synology | ✅ Boot du SSD système Linux existant validé via Etron arrière avec v9.5 ; chemin installateur non validé séparément |
 | TrueNAS actuel | Pas proposé par Synology | 🔴 Mauvaise cible : 8 Go de RAM minimum |
 | Hardware | NAS de 2012 encore fonctionnel | Même machine, mais sous votre contrôle |
 
@@ -98,6 +99,7 @@ Ici, « devrait fonctionner » n'est pas transformé en « fonctionne ».
 | USB 3.0 arrière Etron avec patch F400 seul | ❌ Non bootable |
 | USB 3.0 arrière via DS713Bridge v9.1 | ✅ Debian 13 → réseau/SSH validé |
 | USB 3.0 arrière via DS713Bridge v9.4 FULL-STACK R2 | ✅ SSD système Ubuntu/Linux → réseau/SSH validé |
+| USB 3.0 arrière via DS713Bridge v9.5 SATA-POWER | ✅ SSD système Linux → réseau/SSH + SATA pré-OS validés |
 | USB 3.0 arrière après lancement Linux | ✅ Fonctionne via `xhci_hcd` |
 
 Boot de référence :
@@ -137,7 +139,7 @@ Le repo n'a **pas encore validé son installation A à Z**, donc OMV reste volon
 
 Ubuntu Server 26.04 fournit une image amd64 et peut démarrer autour de 1,5 Go de RAM selon le scénario d'installation.
 
-Le D2700 est Intel 64 et un SSD système Ubuntu Server 26.04 existant boote désormais via l'Etron arrière avec DS713Bridge v9.4 jusqu'au réseau/SSH. Le chemin de boot de l'installateur Ubuntu n'a pas été validé séparément.
+Le D2700 est Intel 64 et un SSD système Linux existant boote désormais via l'Etron arrière avec DS713Bridge v9.5 jusqu'au réseau/SSH. Le chemin de boot de l'installateur Ubuntu n'a pas été validé séparément.
 
 ### 🔴 TrueNAS actuel — à éviter sur ce hardware
 

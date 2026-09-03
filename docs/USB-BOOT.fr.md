@@ -46,3 +46,9 @@ Voir [Bridge USB3 arrière](USB3-BRIDGE.fr.md) pour l'architecture, les hashes e
 Le patch firmware F400 seul n'initialise toujours pas le contrôleur Etron arrière pour le boot. Le chemin v9.4 physiquement validé est distinct : une clé bridge v9.4 en USB façade charge une pile EDK2 xHCI/USB/storage/filesystem moderne et démarre avec succès le SSD système Linux existant via l'Etron arrière jusqu'à Linux, au réseau et à SSH.
 
 Utilisez `scripts/12-create-usb3-bridge-v94.sh` comme bridge arrière recommandé actuel. DS713Bridge v9.1 reste la référence historique minimal-stack Debian.
+
+## DS713Bridge v9.5 SATA-POWER
+
+v9.5 est le bridge de déploiement actuel. Il conserve la pile EDK2 v9.4 validée et alimente les baies SATA du DS713+ avant la découverte de l'OS arrière : GPIO16 -> 200 ms -> GPIO20.
+
+Les essais J2/DOM v9.4 et v9.5 sont négatifs ; la même v9.5 fonctionne depuis l'USB frontal.

@@ -128,3 +128,7 @@ Once the OS calls `ExitBootServices()`, xHCI/storage ownership belongs to the OS
 ## Historical baseline
 
 DS713Bridge v9.1 remains important: it is the minimal-stack reference that physically booted Debian 13 behind the Etron controller to network/SSH. v9.4 does not rewrite that history; it is the newer full-stack solution validated for the rear SSD case.
+
+## Writer safety maintenance
+
+The historical hash documents the v9.4 writer used for the original physical validation. The public script may receive **host-side** safety fixes that do not change the v9.4 UEFI payload; in v0.4.0 it preserves `/dev/disk/by-id` targets and revalidates them immediately before erasing.

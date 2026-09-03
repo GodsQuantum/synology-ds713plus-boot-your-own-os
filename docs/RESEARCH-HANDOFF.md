@@ -90,7 +90,7 @@ eae1c93e208495fe81b279b1663a1747367548a7735076e25fa9266097515fa6
 
 ## Writer safety finding
 
-During a real USB-key build, USB re-enumeration changed a  assignment.
+During a real USB-key build, USB re-enumeration changed a `/dev/sdX` assignment.
 
 The public writers must therefore preserve a stable identity and re-check it just before destruction:
 
@@ -120,7 +120,7 @@ Priority questions:
 
 1. Is J2 VBUS present early enough for firmware enumeration?
 2. Is there a J2-specific reset/enable line?
-3. Is the internal DOM enumerated before or separately from patched ?
+3. Is the internal DOM enumerated before or separately from patched `UsbBusDxe`?
 4. Is there a distinct BDS/internal-DOM boot policy?
 5. Can serial output distinguish electrically absent from enumerated/rejected?
 6. Can xHCI and SATA-power support be integrated directly in firmware?

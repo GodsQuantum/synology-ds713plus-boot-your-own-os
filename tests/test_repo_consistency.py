@@ -92,3 +92,10 @@ need('choose_stable_target' in read('scripts/13-create-usb3-bridge-v95.sh'), 'v9
 need('GPIO16' in read('docs/USB3-BRIDGE-V95.md'), 'v9.5 GPIO16 documentation missing')
 need('GPIO20' in read('docs/USB3-BRIDGE-V95.md'), 'v9.5 GPIO20 documentation missing')
 need('J2' in read('docs/RESEARCH-STATUS.md'), 'J2 status missing')
+
+# documentation shell-expansion regression gates
+handoff = read('docs/RESEARCH-HANDOFF.md')
+need('`/dev/sdX` assignment' in handoff, 'RESEARCH-HANDOFF lost /dev/sdX literal')
+need('patched `UsbBusDxe`?' in handoff, 'RESEARCH-HANDOFF lost UsbBusDxe literal')
+need('changed a  assignment' not in handoff, 'RESEARCH-HANDOFF contains shell-expansion corruption')
+need('separately from patched ?' not in handoff, 'RESEARCH-HANDOFF contains shell-expansion corruption')

@@ -1,0 +1,41 @@
+[Defines]
+  INF_VERSION = 0x00010005
+  BASE_NAME = DS713NativeBoot
+  FILE_GUID = C57AD6B7-0515-40A8-9D21-551652854E37
+  MODULE_TYPE = UEFI_APPLICATION
+  VERSION_STRING = 3.0
+  ENTRY_POINT = UefiMain
+
+[Sources]
+  DS713NativeBoot.c
+  XhciDxeBlob.c
+  UsbBusDxeBlob.c
+  UsbMassStorageDxeBlob.c
+  DiskIoDxeBlob.c
+  PartitionDxeBlob.c
+  EnglishDxeBlob.c
+  FatDxeBlob.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+[LibraryClasses]
+  UefiApplicationEntryPoint
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  BaseLib
+  BaseMemoryLib
+  MemoryAllocationLib
+  DevicePathLib
+  IoLib
+  PrintLib
+
+[Guids]
+  gEfiGlobalVariableGuid
+
+[Protocols]
+  gEfiDriverBindingProtocolGuid
+  gEfiLoadedImageProtocolGuid
+  gEfiPciIoProtocolGuid
+  gEfiSimpleFileSystemProtocolGuid

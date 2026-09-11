@@ -5,7 +5,8 @@
 
 **[🇫🇷 Version française](README.fr.md)** ·
 [Quick start](docs/QUICKSTART.md) ·
-[Rear USB3 bridge](docs/USB3-BRIDGE.md) ·
+[N3 firmware](native/README.md) ·
+[USB3 bridge — appendix](bridge/README.md) ·
 [Choose an OS](docs/OS-OPTIONS.md) ·
 [RAM upgrade](docs/RAM-UPGRADE.md) ·
 [Verified hardware](docs/VERIFIED-HARDWARE.md) ·
@@ -24,21 +25,31 @@ This project takes a different route: keep the hardware, remove the firmware's S
 
 ## Start here
 
-There are **two separate stages**. Do not mix them:
+The recommended path no longer requires a permanent bridge key. Starting from a **retail DS713+ that still boots DSM**, a Linux PC builds one firmware candidate that:
 
-1. **Firmware unlock (required once):** while the NAS still runs DSM, use a Linux workstation + DSM admin SSH to remove the `F400:F400` restriction. The scripts double-dump, validate the exact DS713+ profile, calculate the physical patch zone, require a separate arm step, attempt rollback on verification failure, and refuse reboot clearance until the whole BIOS region verifies twice.
-2. **Rear USB3 bridge (optional, but recommended if the OS lives on a rear port):** create the physically validated v9.5 SATA-POWER bridge with `./scripts/13-create-usb3-bridge-v95.sh`. It loads a modern EDK2 xHCI/USB/storage/filesystem stack and chainloads the rear medium's standard `\EFI\BOOT\BOOTX64.EFI`. The v9.1 writer remains available for historical reproduction.
+1. removes Synology's `F400:F400` USB restriction;
+2. replaces the legacy Internal Shell with **DS713NativeBoot N3**;
+3. leaves Intel ME, the flash descriptor and unrelated firmware data untouched.
 
-**Fastest route:** follow **[Quick start](docs/QUICKSTART.md)** from top to bottom. Read **[Safety](docs/SAFETY.md)** before the firmware write.
+N3 powers the SATA bays, then tries front USB, rear USB 3.0 through the Etron EJ168, and internal SATA. It can reuse matching `Boot####` entries and falls back to the standard `\EFI\BOOT\BOOTX64.EFI` path.
+
+The N3 payload shipped here is **the exact binary that cold-booted the validation DS713+ without a bridge key**, from the rear USB SSD into Ubuntu 26.04.1, networking and SSH.
+
+Follow the [quick start](docs/QUICKSTART.md). The main entry point is:
 
 ```text
-DSM still running
-  -> 00..06 audit/build/preflight
-  -> 07 prepare -> status -> arm -> status
-  -> 08 full BIOS verify -> READY_FOR_REBOOT=YES
-  -> reboot/test normal non-F400 USB
-  -> optional 13-create-usb3-bridge-v95.sh for rear Etron boot + SATA power
+./scripts/open-ds713plus.sh audit
+./scripts/open-ds713plus.sh build
+./scripts/open-ds713plus.sh prepare
+./scripts/open-ds713plus.sh status
+./scripts/open-ds713plus.sh arm
+./scripts/open-ds713plus.sh status
+./scripts/open-ds713plus.sh verify
 ```
+
+`audit`, `build` and `prepare` do not write SPI. The real write is behind the separate `arm` step, and reboot clearance is only given after `READY_FOR_REBOOT=YES`.
+
+DS713Bridge v9.5 remains preserved as a fallback, diagnostic tool and research appendix: [bridge appendix](bridge/README.md).
 
 ---
 
@@ -211,72 +222,62 @@ Deep dive: [How the F400 restriction works](docs/THEORY.md).
 
 ## 🚀 Workflow
 
-Run the tooling from a Linux machine with SSH access to DSM.
+From a Linux PC that can reach DSM over SSH:
 
 ```bash
 export NAS_HOST='192.168.1.x'
-export NAS_USER='your-admin-user'
+export NAS_USER='your-dsm-admin'
 
-./scripts/00-build-flashrom.sh
-./scripts/01-install-flashrom.sh
-./scripts/02-probe.sh
-./scripts/03-dump.sh
-./scripts/04-build-uefi-tools.sh
-./scripts/05-patch-bios.sh artifacts/bios-read1.bin
-./scripts/06-preflight.sh
+./scripts/open-ds713plus.sh audit
+./scripts/open-ds713plus.sh build
+./scripts/open-ds713plus.sh prepare
 ```
 
-At this point **nothing has been flashed yet**.
-
-The real write is intentionally split into explicit stages:
+Those three stages perform **no SPI write**. Then inspect status:
 
 ```bash
-./scripts/07-flash.sh prepare
-./scripts/07-flash.sh arm
-./scripts/07-flash.sh status
+./scripts/open-ds713plus.sh status
 ```
 
-Before rebooting:
+Arm only when the worker reports `STATUS=WAITING_FOR_ARM`:
 
 ```bash
-./scripts/08-postflash-verify.sh
+./scripts/open-ds713plus.sh arm
+./scripts/open-ds713plus.sh status
 ```
 
-Do not reboot unless the final verification reports:
+After `FINAL_STATUS=SUCCESS_CANDIDATE_VERIFIED_TWICE`, run the full BIOS verification:
 
-```text
-READY_FOR_REBOOT=YES
+```bash
+./scripts/open-ds713plus.sh verify
 ```
 
-The flashing workflow never reboots the NAS automatically.
-
-Read **[Safety](docs/SAFETY.md)** and **[Recovery](docs/RECOVERY.md)** before writing.
+Never reboot until the output contains `READY_FOR_REBOOT=YES`. See the [quick start](docs/QUICKSTART.md) for prerequisites and expected output.
 
 ---
 
-## Rear USB 3.0: what is actually verified
+## Rear USB 3.0: N3 now replaces the bridge key
 
-**Current recommended deployment: DS713Bridge v9.4 FULL-STACK R2.** On 2026-09-01, a v9.4 key in the front USB port successfully booted the existing Ubuntu/Linux system SSD through the rear Etron controller to network/SSH. Unlike the minimal v9.1 path, v9.4 loads `XhciDxe`, `UsbBusDxe`, `UsbMassStorageDxe`, `DiskIoDxe`, `PartitionDxe`, `EnglishDxe`, and `Fat` and binds them through `EFI_DRIVER_BINDING_PROTOCOL`. See [the v9.4 guide](docs/USB3-BRIDGE-V94.md).
+The F400 patch alone did not initialize the Etron EJ168 before the OS, which is why earlier versions of this project used a front **DS713Bridge** key.
 
-The **F400 firmware patch alone** still does not initialize the rear Etron EJ168A xHCI controller. Both rear ports produced negative cold-boot results in the original v0.1.0 experiment.
+**DS713NativeBoot N3 now embeds the validated stack directly in firmware**: `XhciDxe`, `UsbBusDxe`, `UsbMassStorageDxe`, `DiskIoDxe`, `PartitionDxe`, `EnglishDxe` and `Fat`. It also performs the SATA power sequence GPIO16 → 200 ms → GPIO20.
 
-The later **DS713Bridge v9.1** experiment solved that separate problem without modifying the OS medium:
+Hardware validation on September 10, 2026:
 
 ```text
-patched Synology firmware
-  -> bridge key in front USB
-  -> DS713Bridge v9.1 + validated XhciDxe
-  -> Etron EJ168A
-  -> rear UEFI medium
-  -> \EFI\BOOT\BOOTX64.EFI
-  -> Debian 13 -> network -> SSH
+bridge key physically removed
+  → N3 firmware
+  → Etron EJ168 initialized
+  → rear SSD filesystem discovered
+  → \EFI\BOOT\BOOTX64.EFI
+  → Ubuntu 26.04.1
+  → network
+  → SSH
 ```
 
-The bridge does not hard-code an OS, filesystem UUID, disk serial, rear-port number, `BootOrder`, or `BootNext`. The implementation discovers filesystems below the Etron controller and chainloads only the standard removable-media loader.
+The observed UEFI breadcrumb was `0x277`, confirming `GPIO_OK`, `REAR_CTRL`, `REAR_STACK_OK`, `REAR_FS` and `CHAINLOAD`. A subsequent reboot reached Linux `graphical.target` in 46.16 s after firmware handoff.
 
-**Physical evidence is controller-level:** a rear-Etron Debian boot to network/SSH is verified. The code is rear-port agnostic, but this repository does not claim that both physical rear connectors were independently re-run A-to-Z with v9.1.
-
-See **[Rear USB3 bridge](docs/USB3-BRIDGE.md)** for exact hashes, measured timings, and negative experiments.
+The bridge is therefore no longer required. It remains in the [DS713Bridge appendix](bridge/README.md) for fallback and for reproducing the v9.1 → v9.5 research path.
 
 ---
 
@@ -287,6 +288,9 @@ See **[Rear USB3 bridge](docs/USB3-BRIDGE.md)** for exact hashes, measured timin
 | Pick Debian / OMV / Ubuntu / another OS | [OS options](docs/OS-OPTIONS.md) |
 | Upgrade the RAM | [RAM upgrade](docs/RAM-UPGRADE.md) |
 | See exactly what hardware was verified | [Verified hardware](docs/VERIFIED-HARDWARE.md) |
+| Flash native F400 + N3 firmware | [Quick start](docs/QUICKSTART.md) |
+| Understand N3 | [DS713NativeBoot N3](native/README.md) |
+| Legacy bridge method | [DS713Bridge appendix](bridge/README.md) |
 | Understand the firmware patch | [Theory](docs/THEORY.md) |
 | See hashes / reference offsets | [Reference results](docs/REFERENCE-RESULTS.md) |
 | Test USB boot correctly | [USB boot](docs/USB-BOOT.md) |

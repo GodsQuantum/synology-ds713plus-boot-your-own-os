@@ -5,7 +5,8 @@
 
 **[🇬🇧 English version](README.md)** ·
 [Démarrage rapide](docs/QUICKSTART.fr.md) ·
-[Bridge USB3 arrière](docs/USB3-BRIDGE.fr.md) ·
+[Firmware N3](native/README.fr.md) ·
+[Bridge USB3 — annexe](bridge/README.fr.md) ·
 [Choisir un OS](docs/OS-OPTIONS.fr.md) ·
 [Upgrade RAM](docs/RAM-UPGRADE.fr.md) ·
 [Matériel validé](docs/VERIFIED-HARDWARE.fr.md) ·
@@ -24,21 +25,31 @@ L'idée du projet est donc simple : garder le hardware, enlever le verrou USB sp
 
 ## Commencer ici
 
-Il y a **deux étapes distinctes**. Ne les mélangez pas :
+Le chemin recommandé ne demande plus de clé bridge permanente. À partir d'un **DS713+ retail encore sous DSM**, un PC Linux prépare un unique firmware qui :
 
-1. **Déverrouillage firmware (une seule fois, obligatoire) :** tant que le NAS tourne encore sous DSM, utilisez un poste Linux + un compte admin DSM en SSH pour supprimer la restriction `F400:F400`. Le workflow double-dumpe le BIOS, valide le profil exact du DS713+, calcule la patchzone physique, exige une étape d'armement séparée, tente un rollback si la vérification échoue et ne donne l'autorisation de reboot qu'après deux vérifications complètes de la région BIOS.
-2. **Bridge USB3 arrière (optionnel, recommandé si l'OS doit vivre derrière) :** créez le bridge v9.5 SATA-POWER physiquement validé avec `./scripts/13-create-usb3-bridge-v95.sh`. Il charge une pile EDK2 xHCI/USB/storage/filesystem moderne puis chaîne le `\EFI\BOOT\BOOTX64.EFI` standard du média arrière. Le writer v9.1 reste disponible pour reproduction historique.
+1. supprime la restriction USB Synology `F400:F400` ;
+2. remplace l'ancien Internal Shell par **DS713NativeBoot N3** ;
+3. conserve le reste du firmware et ne touche ni Intel ME ni le descriptor.
 
-**Chemin le plus simple :** suivez **[Démarrage rapide](docs/QUICKSTART.fr.md)** de haut en bas. Lisez **[Sécurité](docs/SAFETY.fr.md)** avant toute écriture firmware.
+N3 alimente les baies SATA puis essaie, dans cet ordre, l'USB façade, l'USB 3.0 arrière via l'Etron EJ168, puis le SATA interne. Il utilise les `Boot####` compatibles et le fallback UEFI standard `\EFI\BOOT\BOOTX64.EFI`.
+
+Le N3 livré dans le dépôt est **le binaire exact qui a cold-booté le DS713+ de validation sans clé bridge**, depuis le SSD USB arrière jusqu'à Ubuntu 26.04.1 + réseau + SSH.
+
+**Chemin pratique :** suivez [Démarrage rapide](docs/QUICKSTART.fr.md). Le lanceur principal est :
 
 ```text
-DSM encore actif
-  -> 00..06 audit/build/preflight
-  -> 07 prepare -> status -> arm -> status
-  -> 08 double vérification BIOS -> READY_FOR_REBOOT=YES
-  -> reboot/test d'une clé non-F400 normale
-  -> optionnel : 13-create-usb3-bridge-v95.sh pour booter via l'Etron arrière + alimenter les SATA
+./scripts/open-ds713plus.sh audit
+./scripts/open-ds713plus.sh build
+./scripts/open-ds713plus.sh prepare
+./scripts/open-ds713plus.sh status
+./scripts/open-ds713plus.sh arm
+./scripts/open-ds713plus.sh status
+./scripts/open-ds713plus.sh verify
 ```
+
+`audit`, `build` et `prepare` n'écrivent rien dans la SPI. `arm` est volontairement séparé. Le projet n'autorise le reboot qu'après `READY_FOR_REBOOT=YES`.
+
+La clé **DS713Bridge v9.5** reste conservée comme fallback, outil de diagnostic et documentation historique : [annexe bridge](bridge/README.fr.md).
 
 ---
 
@@ -52,7 +63,7 @@ DSM encore actif
 | Boot sur clé USB normale | ❌ Firmware limité à `F400:F400` | ✅ Boot non-F400 validé |
 | Debian 13 | Pas un chemin de boot Synology normal | ✅ **Validé A à Z** |
 | OpenMediaVault 8 | Pas proposé par Synology | 🟢 Très bon candidat |
-| Ubuntu Server 26.04 LTS | Pas proposé par Synology | ✅ Boot du SSD système Linux existant validé via Etron arrière avec v9.5 ; chemin installateur non validé séparément |
+| Ubuntu Server 26.04 LTS | Pas proposé par Synology | ✅ SSD système validé en boot arrière direct via firmware N3, sans clé bridge |
 | TrueNAS actuel | Pas proposé par Synology | 🔴 Mauvaise cible : 8 Go de RAM minimum |
 | Hardware | NAS de 2012 encore fonctionnel | Même machine, mais sous votre contrôle |
 
@@ -211,72 +222,68 @@ Détails : [Fonctionnement du verrou F400](docs/THEORY.fr.md).
 
 ## 🚀 Workflow
 
-Depuis une machine Linux ayant accès à DSM en SSH :
+Depuis un PC Linux ayant accès à DSM en SSH :
 
 ```bash
 export NAS_HOST='192.168.1.x'
 export NAS_USER='votre-utilisateur-admin'
 
-./scripts/00-build-flashrom.sh
-./scripts/01-install-flashrom.sh
-./scripts/02-probe.sh
-./scripts/03-dump.sh
-./scripts/04-build-uefi-tools.sh
-./scripts/05-patch-bios.sh artifacts/bios-read1.bin
-./scripts/06-preflight.sh
+./scripts/open-ds713plus.sh audit
+./scripts/open-ds713plus.sh build
+./scripts/open-ds713plus.sh prepare
 ```
 
-À ce stade, **rien n'a encore été flashé**.
-
-L'écriture réelle est volontairement séparée :
+Les trois étapes ci-dessus sont **sans écriture SPI**. Après `prepare`, vérifiez :
 
 ```bash
-./scripts/07-flash.sh prepare
-./scripts/07-flash.sh arm
-./scripts/07-flash.sh status
+./scripts/open-ds713plus.sh status
 ```
 
-Puis, avant reboot :
+N'armez que si le worker affiche `STATUS=WAITING_FOR_ARM` :
 
 ```bash
-./scripts/08-postflash-verify.sh
+./scripts/open-ds713plus.sh arm
+./scripts/open-ds713plus.sh status
 ```
 
-Ne redémarrez pas tant que la vérification finale ne renvoie pas :
+Après `FINAL_STATUS=SUCCESS_CANDIDATE_VERIFIED_TWICE`, lancez la vérification complète de la région BIOS :
+
+```bash
+./scripts/open-ds713plus.sh verify
+```
+
+Ne redémarrez jamais tant que la sortie ne contient pas :
 
 ```text
 READY_FOR_REBOOT=YES
 ```
 
-Le workflow de flash ne redémarre jamais automatiquement le NAS.
-
-Lire **[Sécurité](docs/SAFETY.fr.md)** et **[Récupération](docs/RECOVERY.fr.md)** avant l'écriture.
+Le détail, les prérequis et les sorties attendues sont dans [Démarrage rapide](docs/QUICKSTART.fr.md).
 
 ---
 
-## USB 3.0 arrière : ce qui est réellement validé
+## USB 3.0 arrière : N3 remplace désormais la clé bridge
 
-**Déploiement recommandé actuel : DS713Bridge v9.4 FULL-STACK R2.** Le 1er septembre 2026, une clé v9.4 en USB façade a démarré avec succès le SSD système Ubuntu/Linux existant via le contrôleur Etron arrière jusqu'au réseau/SSH. Contrairement au chemin minimal v9.1, v9.4 charge `XhciDxe`, `UsbBusDxe`, `UsbMassStorageDxe`, `DiskIoDxe`, `PartitionDxe`, `EnglishDxe` et `Fat`, puis les lie via `EFI_DRIVER_BINDING_PROTOCOL`. Voir [le guide v9.4](docs/USB3-BRIDGE-V94.fr.md).
+Le patch F400 seul ne suffisait pas à initialiser l'Etron EJ168 avant l'OS. C'est la raison pour laquelle les premières versions du projet utilisaient une clé **DS713Bridge** en façade.
 
-Le **patch firmware F400 seul** n'initialise toujours pas le contrôleur xHCI Etron EJ168A arrière. Les deux ports avaient donné un résultat négatif lors des cold boots de l'expérience v0.1.0.
+**DS713NativeBoot N3 intègre maintenant directement dans le firmware la pile validée** : `XhciDxe`, `UsbBusDxe`, `UsbMassStorageDxe`, `DiskIoDxe`, `PartitionDxe`, `EnglishDxe` et `Fat`. Il exécute aussi la séquence d'alimentation SATA GPIO16 → 200 ms → GPIO20.
 
-L'expérience ultérieure **DS713Bridge v9.1** résout ce problème distinct sans modifier le média OS :
+Validation hardware du 10 septembre 2026 :
 
 ```text
-firmware Synology patché
-  -> clé bridge en façade
-  -> DS713Bridge v9.1 + XhciDxe validé
-  -> Etron EJ168A
-  -> média UEFI arrière
-  -> \EFI\BOOT\BOOTX64.EFI
-  -> Debian 13 -> réseau -> SSH
+clé bridge physiquement retirée
+  → firmware N3
+  → Etron EJ168 initialisé
+  → filesystem du SSD arrière trouvé
+  → \EFI\BOOT\BOOTX64.EFI
+  → Ubuntu 26.04.1
+  → réseau
+  → SSH
 ```
 
-Le bridge ne code en dur ni OS, ni UUID, ni serial disque, ni numéro de port arrière, ni `BootOrder`, ni `BootNext`. Il découvre les filesystems descendants de l'Etron et chaîne uniquement le loader amovible standard.
+Le breadcrumb UEFI observé est `0x277`, ce qui confirme notamment `GPIO_OK`, `REAR_CTRL`, `REAR_STACK_OK`, `REAR_FS` et `CHAINLOAD`. Un reboot suivant a atteint `graphical.target` en 46,16 s côté Linux après le handoff firmware.
 
-**La preuve physique est au niveau du contrôleur arrière :** un boot Debian via Etron jusqu'au réseau/SSH est validé. Le code est agnostique du port, mais le dépôt ne prétend pas que les deux connecteurs physiques ont chacun été retestés A à Z avec v9.1.
-
-Voir **[Bridge USB3 arrière](docs/USB3-BRIDGE.fr.md)** pour les hashes, chronos et expériences négatives.
+La clé bridge n'est donc plus un prérequis. Elle reste disponible dans [l'annexe DS713Bridge](bridge/README.fr.md) pour le fallback et la reproduction des recherches v9.1 → v9.5.
 
 ---
 
@@ -287,6 +294,9 @@ Voir **[Bridge USB3 arrière](docs/USB3-BRIDGE.fr.md)** pour les hashes, chronos
 | Choisir Debian / OMV / Ubuntu / autre | [Options OS](docs/OS-OPTIONS.fr.md) |
 | Upgrader la RAM | [Upgrade RAM](docs/RAM-UPGRADE.fr.md) |
 | Voir le matériel réellement validé | [Matériel validé](docs/VERIFIED-HARDWARE.fr.md) |
+| Flasher le firmware natif F400 + N3 | [Démarrage rapide](docs/QUICKSTART.fr.md) |
+| Comprendre N3 | [DS713NativeBoot N3](native/README.fr.md) |
+| Ancienne méthode bridge | [Annexe DS713Bridge](bridge/README.fr.md) |
 | Comprendre le patch firmware | [Théorie](docs/THEORY.fr.md) |
 | Voir hashes et offsets de référence | [Résultats de référence](docs/REFERENCE-RESULTS.fr.md) |
 | Tester correctement le boot USB | [Boot USB](docs/USB-BOOT.fr.md) |

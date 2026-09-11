@@ -12,3 +12,6 @@ work/
 __pycache__/
 *.pyc
 *.efi
+# Hardware-validated N3 payloads are intentionally versioned.
+!native/validated/DS713NativeBoot-N3.efi
+!native/validated/drivers/*.efi

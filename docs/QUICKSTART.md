@@ -1,89 +1,119 @@
-# DS713+ quick start
+# DS713+ — quick start
 
-This is the practical path. Reverse-engineering details are in `RESEARCH-HANDOFF.md`.
+The recommended path turns a **retail DS713+ that still boots DSM** into a machine that can boot a normal x86-64 UEFI OS without keeping a bridge key plugged in.
 
-## A. Download
+The final firmware does two things in one SPI write:
 
-On a Linux workstation:
+- removes Synology's `F400:F400` USB restriction;
+- replaces the legacy Internal Shell with the hardware-validated **DS713NativeBoot N3** loader.
+
+N3 powers both SATA bays, tries front USB first, initializes the rear Etron USB 3.0 controller next, then tries internal SATA. The portable OS fallback is `\EFI\BOOT\BOOTX64.EFI`.
+
+> ⚠️ Firmware flashing carries real risk. Read [SAFETY.md](SAFETY.md) and [RECOVERY.md](RECOVERY.md) before `arm`.
+
+## 1. Prerequisites
+
+- DS713+ still booting DSM;
+- SSH enabled in DSM;
+- DSM administrator account;
+- Linux PC on the same network;
+- stable power.
 
 ```bash
 git clone https://github.com/GodsQuantum/synology-ds713plus-boot-your-own-os.git
 cd synology-ds713plus-boot-your-own-os
-```
 
-## B. Unlock DS713+ firmware once
-
-Requirements: bootable DSM, DSM admin SSH, Linux workstation with Docker or Podman, stable power.
-
-```bash
 export NAS_HOST='192.168.1.x'
 export NAS_USER='your-dsm-admin'
-
-./scripts/00-build-flashrom.sh
-./scripts/01-install-flashrom.sh
-./scripts/02-probe.sh
-./scripts/03-dump.sh
-./scripts/04-build-uefi-tools.sh
-./scripts/05-patch-bios.sh artifacts/bios-read1.bin
-./scripts/06-preflight.sh
 ```
 
-Stop on the first failure.
-
-The actual SPI write remains deliberately separated:
+## 2. Audit and double dump — no SPI write
 
 ```bash
-./scripts/07-flash.sh prepare
-./scripts/07-flash.sh status
-
-# only if STATUS=WAITING_FOR_ARM:
-./scripts/07-flash.sh arm
-./scripts/07-flash.sh status
-
-# mandatory before reboot:
-./scripts/08-postflash-verify.sh
+./scripts/open-ds713plus.sh audit
 ```
 
-Reboot only if `READY_FOR_REBOOT=YES`.
+This builds/installs the project flashrom, verifies the DS713+ SPI profile, performs two independent reads and refuses to continue if they differ.
 
-## C. Create the DS713Bridge v9.5 key
-
-From the repository directory:
+## 3. Build one F400 + N3 candidate — still no SPI write
 
 ```bash
-./scripts/13-create-usb3-bridge-v95.sh
+./scripts/open-ds713plus.sh build
 ```
 
-The script:
-
-1. lists usable whole USB disks;
-2. shows size, model, serial and stable identity;
-3. asks for the key number;
-4. keeps the target through `/dev/disk/by-id/usb-*`;
-5. builds and validates before erasing;
-6. asks for explicit destructive confirmation;
-7. writes and verifies the key.
-
-## D. Layout
+The default payload is the exact N3 binary validated on real hardware:
 
 ```text
-front USB      : DS713Bridge v9.5 key
-rear USB       : SSD / flash medium containing the OS
-internal SATA  : powered automatically by v9.5 before Linux
+SHA-256  63037d646791ddfc133840ecd5b4c80151213c61e8ce34862b7483799734d6a3
+Size     315392 bytes
 ```
 
-The rear OS medium must expose:
+Sources live in `native/`; the validated payload and embedded EDK2 drivers live in `native/validated/`.
+
+## 4. Live preflight + prepare — still no SPI write
+
+```bash
+./scripts/open-ds713plus.sh prepare
+```
+
+Do not continue unless status reaches:
+
+```text
+STATUS=WAITING_FOR_ARM
+```
+
+## 5. Explicitly arm the write
+
+```bash
+./scripts/open-ds713plus.sh status
+./scripts/open-ds713plus.sh arm
+./scripts/open-ds713plus.sh status
+```
+
+The NAS-side worker writes only the computed erase-aligned patch range, verifies the candidate twice and attempts an automatic rollback if verification fails.
+
+Expected success:
+
+```text
+FINAL_STATUS=SUCCESS_CANDIDATE_VERIFIED_TWICE
+```
+
+## 6. Full BIOS verification before reboot
+
+```bash
+./scripts/open-ds713plus.sh verify
+```
+
+Reboot only when it ends with:
+
+```text
+READY_FOR_REBOOT=YES
+```
+
+## 7. OS media
+
+For the most portable setup, provide:
 
 ```text
 \EFI\BOOT\BOOTX64.EFI
 ```
 
-## E. Actual status
+N3 physical order:
 
-- firmware `F400:F400` bypass: verified;
-- ordinary front USB boot: verified;
-- rear-Etron Linux SSD boot with v9.5: verified;
-- pre-Linux SATA power GPIO16 -> 200 ms -> GPIO20: verified;
-- internal J2/DOM: tested with v9.4/v9.5, unresolved.
+```text
+1. front USB 2.0
+2. rear USB 3.0 / Etron EJ168
+3. internal SATA
+```
 
-To continue research: `docs/RESEARCH-HANDOFF.md`.
+SATA power is asserted before boot discovery: GPIO16 HIGH, wait 200 ms, GPIO20 HIGH.
+
+## 8. Validation status
+
+The validated N3 cold-booted without a bridge key into Ubuntu 26.04.1 from the rear USB SSD and reached network + SSH. The observed N3 breadcrumb was `0x277` (GPIO, rear stack, rear filesystem and chainload all reached).
+
+A repeat boot reached Linux `graphical.target` in **46.16 s** after firmware handoff.
+
+## What about DS713Bridge?
+
+It is no longer required by the primary workflow. It remains preserved as a removable fallback, diagnostic tool and research path. See **[bridge/README.md](../bridge/README.md)**.

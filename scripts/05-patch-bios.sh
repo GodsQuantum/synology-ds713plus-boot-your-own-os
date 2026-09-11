@@ -13,23 +13,34 @@ cp "$OUT"  "$TMP/cand/cand.bin"
 (cd "$TMP/cand" && "$EXTRACT" cand.bin >/dev/null)
 python3 - "$TMP/orig/orig.bin.dump" "$TMP/cand/cand.bin.dump" <<'PY'
 import pathlib,sys
-stock=bytes.fromhex('B900F40000663B4808')
-j1=bytes.fromhex('0F8517030000'); mid=bytes.fromhex('663B480A'); j2=bytes.fromhex('0F850D030000'); nop=b'\x90'*6
+anchor=bytes.fromhex('B900F4000033F6448ACA663B4808')
+j1=bytes.fromhex('0F8517030000')
+mid=bytes.fromhex('663B480A')
+j2=bytes.fromhex('0F850D030000')
+nop=b'\x90'*6
 
 def hit(root, patched):
     matches=[]
-    for p in pathlib.Path(root).rglob('*'):
-        if not p.is_file(): continue
+    for p in pathlib.Path(root).rglob('body.bin'):
+        if 'PE32 image section' not in str(p.parent):
+            continue
         try: b=p.read_bytes()
-        except: continue
-        if len(b) < 0x29a1: continue
-        if b[0x2983:0x298c] != stock: continue
-        if b[0x2997:0x299b] != mid: continue
-        expected1=nop if patched else j1; expected2=nop if patched else j2
-        if b[0x2991:0x2997]==expected1 and b[0x299b:0x29a1]==expected2: matches.append(p)
-    if len(matches)!=1: raise SystemExit(f'Expected exactly one UsbBusDxe PE match in {root}, got {len(matches)}')
+        except OSError: continue
+        off=b.find(anchor)
+        if off < 0 or b.find(anchor, off+1) >= 0:
+            continue
+        expected1=nop if patched else j1
+        expected2=nop if patched else j2
+        pos1=off+len(anchor)
+        posmid=pos1+6
+        pos2=posmid+len(mid)
+        if b[pos1:pos1+6]==expected1 and b[posmid:posmid+4]==mid and b[pos2:pos2+6]==expected2:
+            matches.append(p)
+    if len(matches)!=1:
+        raise SystemExit(f'Expected exactly one UsbBusDxe PE match in {root}, got {len(matches)}')
     return matches[0]
-print('STOCK_PE=',hit(sys.argv[1],False)); print('PATCHED_PE=',hit(sys.argv[2],True))
+print('STOCK_PE=',hit(sys.argv[1],False))
+print('PATCHED_PE=',hit(sys.argv[2],True))
 PY
 cmp -s "$ORIG" "$OUT" && die 'Candidate is identical to stock.'
 sha256sum "$ORIG" "$OUT" | tee "$ARTIFACTS/patch-sha256.txt"

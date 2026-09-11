@@ -1,11 +1,12 @@
 .PHONY: lint test
 
 lint:
-	@for f in scripts/*.sh scripts/lib/*.sh; do bash -n "$$f"; done
-	@python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("scripts/calc_patchzone.py").read_text())'
-	@if command -v shellcheck >/dev/null 2>&1; then shellcheck -x -S warning scripts/*.sh scripts/lib/*.sh; else echo 'shellcheck not installed; skipped'; fi
+	@for f in scripts/*.sh scripts/lib/*.sh scripts/native/*.sh; do bash -n "$$f"; done
+	@python3 -c 'import ast, pathlib; ast.parse(pathlib.Path("scripts/calc_patchzone.py").read_text()); ast.parse(pathlib.Path("scripts/native/build_firmware.py").read_text())'
+	@if command -v shellcheck >/dev/null 2>&1; then shellcheck -x -S warning scripts/*.sh scripts/lib/*.sh scripts/native/*.sh; else echo 'shellcheck not installed; skipped'; fi
 	@python3 tests/test_repo_consistency.py
 	@python3 tests/test_public_hygiene.py
+	@python3 -m unittest tests.test_native_public_workflow -v
 	@python3 tests/test_manifest.py
 	@python3 tests/test_markdown_links.py
 	@python3 tests/test_public_bridge.py

@@ -12,7 +12,7 @@ UEFIEXTRACT_RELEASE=A75
 UEFIEXTRACT_URL="https://github.com/LongSoft/UEFITool/releases/download/${UEFIEXTRACT_RELEASE}/UEFIExtract_NE_A75_x64_linux.zip"
 UEFIEXTRACT_ZIP_SHA256=5ee05d0da0c235626de67959d6cd97767e0d7ac67d42c8839e5972e8c23fd5a5
 
-"$RUNTIME" run --rm -v "$B:/work" docker.io/library/debian:11 /bin/bash -ceu "
+"$RUNTIME" run --rm -v "$B:/work" docker.io/library/debian:12 /bin/bash -ceu "
  export DEBIAN_FRONTEND=noninteractive
  apt-get update
  apt-get install -y git build-essential qt5-qmake qtbase5-dev qtbase5-dev-tools curl ca-certificates unzip

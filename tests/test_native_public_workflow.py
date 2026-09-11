@@ -1,9 +1,11 @@
 import hashlib
 from pathlib import Path
+import re
 import subprocess
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+ABS_USER_HOME = re.compile(r'(?:/(?:home|Users)/[A-Za-z0-9._-]+/|[A-Za-z]:\\Users\\[A-Za-z0-9._-]+\\)')
 
 class NativePublicWorkflow(unittest.TestCase):
     def text(self, rel):
@@ -32,7 +34,7 @@ class NativePublicWorkflow(unittest.TestCase):
     def test_native_public_scripts_have_no_developer_absolute_paths(self):
         for p in (ROOT / 'scripts' / 'native').glob('*'):
             if p.is_file():
-                self.assertNotIn('/home/exampleuser', p.read_text(errors='ignore'), p)
+                self.assertIsNone(ABS_USER_HOME.search(p.read_text(errors='ignore')), p)
 
     def test_builder_combines_f400_candidate_with_n3_from_stock_carrier(self):
         s = self.text('scripts/native/build_firmware.py')
@@ -89,7 +91,7 @@ class NativePublicWorkflow(unittest.TestCase):
         s = p.read_text()
         for stage in ('audit', 'build', 'prepare', 'arm', 'status', 'verify'):
             self.assertIn(stage, s)
-        self.assertNotIn('/home/exampleuser', s)
+        self.assertIsNone(ABS_USER_HOME.search(s))
 
 if __name__ == '__main__':
     unittest.main()
